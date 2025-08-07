@@ -5,11 +5,11 @@ const Controls = ({ onHit, onStand, onNewGame, isGameActive }) => {
     <div className="controls-container">
       {isGameActive ? (
         <>
-          <button className="control-button" onClick={onHit}>Взять карту</button>
-          <button className="control-button" onClick={onStand}>Хватит</button>
+          <button className="control-button" onClick={onHit}>Get Card</button>
+          <button className="control-button" onClick={onStand}>Enought</button>
         </>
       ) : (
-        <button className="new-game-button" onClick={onNewGame}>Новая игра</button>
+        <button className="new-game-button" onClick={onNewGame}>New Game</button>
       )}
     </div>
   );

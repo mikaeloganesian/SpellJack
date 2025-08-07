@@ -20,7 +20,7 @@ const Dealer = ({ hand, score, showFirstCard }) => {
 
   return (
     <div className="dealer-container">
-      <h2>Дилер ({displayScore})</h2>
+      <h2>Dealer ({displayScore})</h2>
       <div className="hand-container">
         {hand.map((card, index) => (
           <Card key={index} card={card} isFaceDown={showFirstCard && index === 0} />

@@ -12,7 +12,7 @@ const Card = ({ card }) => {
 
 const Player = ({ hand, score }) => (
   <div className="player-container">
-    <h2>Игрок ({score})</h2>
+    <h2>Player ({score})</h2>
     <div className="hand-container">
       {hand.map((card, index) => <Card key={index} card={card} />)}
     </div>
