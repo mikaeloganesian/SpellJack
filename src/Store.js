@@ -16,7 +16,7 @@ const generateStandardDeck = () => {
 
 class GameStore {
   coins = 100;
-  playerDeck = [];
+  playerDeck = generateStandardDeck();
   playerOwnedCards = generateStandardDeck();
   availableCards = specialCards;
 

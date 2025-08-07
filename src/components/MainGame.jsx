@@ -26,7 +26,7 @@ const createPlayerDeck = (customCards = []) => {
 
 const createDealerDeck = () => {
   const newDeck = [];
-  const dealerValues = ['10', 'J', 'Q', 'K', 'A'];
+  const dealerValues = ['8', '9', '10', 'J', 'Q', 'K', 'A'];
   const suits = ['♠', '♥', '♦', '♣'];
   const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
   let idCounter = 2000;
@@ -226,7 +226,6 @@ const MainGame = observer(() => {
   return (
     <div className="main-game">
       <h1 className="header">Blackjack</h1>
-      {winner && <h2 className="winner-message">{winner}</h2>}
       <Dealer 
         hand={dealerHand} 
         score={dealerScore} 
@@ -236,6 +235,8 @@ const MainGame = observer(() => {
         <div className={`deck-stack ${isAnimating ? 'animate-deal' : ''}`}>
           <div className="card back-card">?</div>
         </div>
+      {winner && <h2 className="winner-message">{winner}</h2>}
+
         <Player hand={playerHand} score={playerScore} />
       </div>
       <Controls
