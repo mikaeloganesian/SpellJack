@@ -242,7 +242,7 @@ const MainGame = observer(() => {
       <Controls
         onHit={handleHit}
         onStand={handleStand}
-        onNewGame={() => setIsGameActive(true)}
+        onNewGame={startNewGame}
         isGameActive={isGameActive && isPlayerTurn}
       />
     </div>

@@ -14,10 +14,24 @@ const generateStandardDeck = () => {
   return deck;
 };
 
+const generateStarterDeck = () => {
+  // Стартовая колода: простые карты 2-10 всех мастей
+  const suits = ['♠', '♥', '♦', '♣'];
+  const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10'];
+  const deck = [];
+  let idCounter = 100;
+  for (let suit of suits) {
+    for (let value of values) {
+      deck.push({ id: idCounter++, value, suit, special: false });
+    }
+  }
+  return deck.slice(0, 10); // Берем только первые 10 карт
+};
+
 class GameStore {
   coins = 100;
-  playerDeck = generateStandardDeck();
-  playerOwnedCards = generateStandardDeck();
+  playerDeck = generateStarterDeck();        // Игровая колода (10 карт для игры)
+  playerOwnedCards = generateStandardDeck(); // Все купленные карты (коллекция)
   availableCards = specialCards;
 
   activeEffects = {
