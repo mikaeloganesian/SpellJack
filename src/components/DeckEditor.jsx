@@ -1,4 +1,3 @@
-import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { gameStore } from '../Store';
 
@@ -25,7 +24,7 @@ const DeckEditor = observer(() => {
   return (
     <div className="deck-editor-container">
       <h2>Deck Editor</h2>
-      <p>Build your deck for the game (cards: {gameStore.playerDeck.length}/10)</p>
+      <p>Build your deck for the game (cards: {gameStore.playerDeck.length}/52)</p>
 
       <div className="deck-section">
         <h3>My Deck</h3>

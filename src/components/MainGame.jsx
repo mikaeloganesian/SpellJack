@@ -4,6 +4,7 @@ import { gameStore } from '../Store';
 import Player from './Player';
 import Dealer from './Dealer';
 import Controls from './Controls';
+import ActualDeckControl from './ActualDeckControl';
 
 const createPlayerDeck = (customCards = []) => {
   const newDeck = [];
@@ -26,15 +27,12 @@ const createPlayerDeck = (customCards = []) => {
 
 const createDealerDeck = () => {
   const newDeck = [];
-  const dealerValues = ['10', 'J', 'Q', 'K', 'A'];
   const suits = ['♠', '♥', '♦', '♣'];
   const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
   let idCounter = 2000;
   for (let suit of suits) {
     for (let value of values) {
-      if (dealerValues.includes(value)) {
-        newDeck.push({ id: idCounter++, value, suit, special: false });
-      }
+      newDeck.push({ id: idCounter++, value, suit, special: false });
     }
   }
   return shuffleDeck(newDeck);
@@ -48,33 +46,37 @@ const shuffleDeck = (deck) => {
   return deck;
 };
 
-const calculateScore = (hand) => {
+const calculateScore = (hand, isPlayerHand = true) => {
   let score = 0;
   let hasAce = false;
 
   for (let card of hand) {
-    if (card.special) {
-      continue;
-    }
+    if (card.special) continue;
+
+    let cardValue = 0;
     if (['J', 'Q', 'K'].includes(card.value)) {
-      score += 10;
+      cardValue = 10;
     } else if (card.value === 'A') {
       hasAce = true;
-      score += 11;
+      cardValue = 11;
     } else {
-      score += parseInt(card.value);
+      cardValue = parseInt(card.value, 10);
     }
+
+    if (isPlayerHand) {
+      const multiplier = gameStore.getCardMultiplier(card.value);
+      cardValue = Math.floor(cardValue * multiplier);
+    }
+
+    score += cardValue;
   }
 
-  if (hasAce && score > 21) {
-    score -= 10;
-  }
-
+  if (hasAce && score > 21) score -= 10;
   return score;
 };
 
 const MainGame = observer(() => {
-  const [playerDeck, setPlayerDeck] = useState([]);
+  // dealer deck остаётся локально, колода игрока — только в store
   const [dealerDeck, setDealerDeck] = useState([]);
   const [playerHand, setPlayerHand] = useState([]);
   const [dealerHand, setDealerHand] = useState([]);
@@ -84,6 +86,9 @@ const MainGame = observer(() => {
   const [winner, setWinner] = useState('');
   const [isGameActive, setIsGameActive] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // модалка с текущей колодой
+  const [showDeck, setShowDeck] = useState(false);
 
   useEffect(() => {
     if (isGameActive) {
@@ -97,39 +102,55 @@ const MainGame = observer(() => {
     }
   }, [isPlayerTurn, isGameActive]);
 
+  useEffect(() => {
+    if (!showDeck) return;
+    const onKey = (e) => e.key === 'Escape' && setShowDeck(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showDeck]);
+
   const startNewGame = () => {
-    const newShuffledPlayerDeck = createPlayerDeck(gameStore.playerDeck);
-    const newShuffledDealerDeck = createDealerDeck();
-    
-    if (newShuffledPlayerDeck.length < 2 || newShuffledDealerDeck.length < 2) {
-      setWinner('Not enough cards in the deck to play!');
+    // создаём новую перемешанную колоду игрока из выбранных в редакторе карт (store)
+    const shuffledPlayerDeck = createPlayerDeck(gameStore.playerDeck);
+    const shuffledDealerDeck = createDealerDeck();
+
+    gameStore.generateNewTarget();
+    gameStore.resetCardCounts?.();
+
+    if (shuffledPlayerDeck.length < 2 || shuffledDealerDeck.length < 2) {
+      setWinner('Not enough cards in the deck to play! Add more cards in Deck Editor.');
       setIsGameActive(false);
       return;
     }
 
-    const newPlayerHand = [newShuffledPlayerDeck.pop(), newShuffledPlayerDeck.pop()];
-    const newDealerHand = [newShuffledDealerDeck.pop(), newShuffledDealerDeck.pop()];
+    // раздаём по 2 карты, остаток колоды игрока пишем в store
+    const deckAfterDeal = [...shuffledPlayerDeck];
+    const newPlayerHand = [deckAfterDeal.pop(), deckAfterDeal.pop()];
+    const newDealerHand = [shuffledDealerDeck.pop(), shuffledDealerDeck.pop()];
 
-    setPlayerDeck(newShuffledPlayerDeck);
-    setDealerDeck(newShuffledDealerDeck);
+    gameStore.playerDeck = deckAfterDeal;
+
+    setDealerDeck(shuffledDealerDeck);
     setPlayerHand(newPlayerHand);
     setDealerHand(newDealerHand);
-    setPlayerScore(calculateScore(newPlayerHand));
-    setDealerScore(calculateScore(newDealerHand));
+    setPlayerScore(calculateScore(newPlayerHand, true));
+    setDealerScore(calculateScore(newDealerHand, false));
     setIsPlayerTurn(true);
     setWinner('');
     setIsGameActive(true);
   };
 
   const checkWinner = (finalPlayerScore, finalDealerScore) => {
-    if (gameStore.activeEffects.shield && finalPlayerScore > 21) {
-      finalPlayerScore = 21;
+    const target = gameStore.currentTarget;
+
+    if (gameStore.activeEffects.shield && finalPlayerScore > target) {
+      finalPlayerScore = target;
       gameStore.activeEffects.shield = false;
     }
-    
-    if (finalPlayerScore > 21) {
+
+    if (finalPlayerScore > target) {
       setWinner('Dealer wins!');
-    } else if (finalDealerScore > 21) {
+    } else if (finalDealerScore > target) {
       setWinner('Player wins!');
       gameStore.addCoins(10);
     } else if (finalPlayerScore === finalDealerScore) {
@@ -143,15 +164,20 @@ const MainGame = observer(() => {
     setIsGameActive(false);
   };
 
+  const drawFromPlayerDeck = () => {
+    const deck = [...gameStore.playerDeck];
+    const card = deck.pop() || null;
+    gameStore.playerDeck = deck; // триггерим MobX
+    return card;
+  };
+
   const handleHit = () => {
     if (!isGameActive || !isPlayerTurn || isAnimating) return;
 
     setIsAnimating(true);
-    
-    setTimeout(() => {
-      const newPlayerDeck = [...playerDeck];
-      const newCard = newPlayerDeck.pop();
 
+    setTimeout(() => {
+      const newCard = drawFromPlayerDeck();
       if (!newCard) {
         setIsAnimating(false);
         return;
@@ -162,30 +188,26 @@ const MainGame = observer(() => {
       }
 
       let newPlayerHand = [...playerHand, newCard];
-      let newPlayerScore = calculateScore(newPlayerHand);
+      let newPlayerScore = calculateScore(newPlayerHand, true);
 
       if (gameStore.activeEffects.extraCard) {
-        if (newPlayerDeck.length > 0) {
-          const extraCard = newPlayerDeck.pop();
-          if (extraCard && extraCard.special) {
-            gameStore.applyCardEffect(extraCard.effect);
-          }
+        const extraCard = drawFromPlayerDeck();
+        if (extraCard) {
+          if (extraCard.special) gameStore.applyCardEffect(extraCard.effect);
           newPlayerHand.push(extraCard);
-          newPlayerScore = calculateScore(newPlayerHand);
+          newPlayerScore = calculateScore(newPlayerHand, true);
         }
         gameStore.activeEffects.extraCard = false;
       }
-  
-      setPlayerDeck(newPlayerDeck);
+
       setPlayerHand(newPlayerHand);
       setPlayerScore(newPlayerScore);
-  
       setIsAnimating(false);
-  
-      if (newPlayerScore >= 21) {
+
+      if (newPlayerScore >= gameStore.currentTarget) {
         setIsPlayerTurn(false);
-        if (newPlayerScore === 21) {
-          setWinner('Blackjack! Player wins!');
+        if (newPlayerScore === gameStore.currentTarget) {
+          setWinner('Perfect! Player wins!');
           gameStore.addCoins(20);
           setIsGameActive(false);
         }
@@ -201,19 +223,22 @@ const MainGame = observer(() => {
   const handleDealerTurn = () => {
     let newDealerDeck = [...dealerDeck];
     let newDealerHand = [...dealerHand];
-    let newDealerScore = calculateScore(newDealerHand);
-    
+    let newDealerScore = calculateScore(newDealerHand, false);
+
     if (gameStore.activeEffects.removeDealerCard) {
       if (newDealerHand.length > 0) {
         newDealerHand.pop();
-        newDealerScore = calculateScore(newDealerHand);
+        newDealerScore = calculateScore(newDealerHand, false);
       }
       gameStore.activeEffects.removeDealerCard = false;
     }
-    
-    while (newDealerScore < 17 && newDealerDeck.length > 0) {
+
+    const target = gameStore.currentTarget;
+    let dealerThreshold = target <= 30 ? 17 : Math.floor(target * 0.85);
+
+    while (newDealerScore < dealerThreshold && newDealerScore < target && newDealerDeck.length > 0) {
       newDealerHand.push(newDealerDeck.pop());
-      newDealerScore = calculateScore(newDealerHand);
+      newDealerScore = calculateScore(newDealerHand, false);
     }
 
     setDealerDeck(newDealerDeck);
@@ -226,22 +251,43 @@ const MainGame = observer(() => {
   return (
     <div className="main-game">
       <h1 className="header">Blackjack</h1>
-      {winner && <h2 className="winner-message">{winner}</h2>}
-      <Dealer 
-        hand={dealerHand} 
-        score={dealerScore} 
-        showFirstCard={isPlayerTurn && !gameStore.activeEffects.revealDealerCard} 
+
+      {/* Модалка с текущей колодой */}
+      <ActualDeckControl visible={showDeck} onClose={() => setShowDeck(false)} />
+
+      <div className="game-target">
+        <h3>Target Score: {gameStore.currentTarget}</h3>
+      </div>
+
+      <Dealer
+        hand={dealerHand}
+        score={dealerScore}
+        showFirstCard={isPlayerTurn && !gameStore.activeEffects.revealDealerCard}
       />
+
       <div className="game-area">
-        <div className={`deck-stack ${isAnimating ? 'animate-deal' : ''}`}>
+        {/* СТОПКА КАРТ — клик открывает модалку */}
+        <div
+          className={`deck-stack ${isAnimating ? 'animate-deal' : ''}`}
+          role="button"
+          tabIndex={0}
+          aria-label="Show current deck"
+          onClick={() => setShowDeck(true)}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setShowDeck(true)}
+          title="Показать текущую колоду"
+          style={{ cursor: 'pointer' }}
+        >
           <div className="card back-card">?</div>
         </div>
+
+        {winner && <h2 className="winner-message">{winner}</h2>}
         <Player hand={playerHand} score={playerScore} />
       </div>
+
       <Controls
         onHit={handleHit}
         onStand={handleStand}
-        onNewGame={() => setIsGameActive(true)}
+        onNewGame={() => setIsGameActive(true)}  // флаг, а раздача идёт из useEffect
         isGameActive={isGameActive && isPlayerTurn}
       />
     </div>

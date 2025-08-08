@@ -14,11 +14,43 @@ const generateStandardDeck = () => {
   return deck;
 };
 
+const generateStarterDeck = () => {
+  // Стартовая колода: простые карты 2-10 всех мастей (полная колода)
+  const suits = ['♠', '♥', '♦', '♣'];
+  const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10'];
+  const deck = [];
+  let idCounter = 100;
+  for (let suit of suits) {
+    for (let value of values) {
+      deck.push({ id: idCounter++, value, suit, special: false });
+    }
+  }
+  return deck; // Возвращаем всю стартовую колоду (36 карт)
+};
+
+
+const generateStartedOwnedDeck = () => {
+  const suits = ['♠', '♥', '♦', '♣'];
+  const values = [ 'J', 'Q', 'K', 'A'];
+  const deck = [];
+  let idCounter = 10000;
+  for (let suit of suits) {
+    for (let value of values) {
+      deck.push({ id: idCounter++, value, suit, special: false });
+    }
+  }
+  return deck;
+}
+
 class GameStore {
   coins = 100;
-  playerDeck = [];
-  playerOwnedCards = generateStandardDeck();
+  playerDeck = generateStarterDeck();        // Игровая колода (10 карт для игры)
+  playerOwnedCards = generateStartedOwnedDeck(); // Все купленные карты (коллекция)
   availableCards = specialCards;
+  currentTarget = 21;                        // Текущая цель игры
+
+  // Коэффициенты для мастей в текущей игре
+  suitMultipliers = {};                      // {suit: multiplier} для каждой масти
 
   activeEffects = {
     shield: false,
@@ -32,6 +64,8 @@ class GameStore {
       playerDeck: observable,
       playerOwnedCards: observable,
       availableCards: observable,
+      currentTarget: observable,
+      suitMultipliers: observable,
       activeEffects: observable,
       addCoins: action,
       addCardToDeck: action,
@@ -40,6 +74,9 @@ class GameStore {
       applyCardEffect: action,
       removeDealerCardEffect: action,
       addExtraCardEffect: action,
+      generateNewTarget: action,
+      resetCardCounts: action,
+      getCardMultiplier: action,
     });
   }
 
@@ -48,14 +85,18 @@ class GameStore {
   }
 
   addCardToDeck(card) {
-    if (this.playerDeck.length < 10) {
+    if (this.playerDeck.length < 52) {
       this.playerDeck.push(card);
     }
   }
 
   removeCardFromDeck(cardId) {
-    this.playerDeck = this.playerDeck.filter(card => card.id !== cardId);
+    const removed = this.playerDeck.find(c => c.id === cardId);
+    if (!removed) return;
+    this.playerDeck = this.playerDeck.filter(c => c.id !== cardId);
+    this.playerOwnedCards.push(removed);
   }
+
 
   buyCard(card) {
     if (this.coins >= card.cost) {
@@ -87,12 +128,40 @@ class GameStore {
     }
   }
 
+  getSuitMultiplier(suit) {
+  // пример: по умолчанию все 1
+    const map = { '♠': 1, '♥': 1, '♦': 1, '♣': 1 };
+    return map[suit] ?? 1;
+  }
+
+
   removeDealerCardEffect() {
     this.activeEffects.removeDealerCard = false;
   }
 
   addExtraCardEffect() {
     this.activeEffects.extraCard = false;
+  }
+
+  generateNewTarget() {
+    this.currentTarget = Math.floor(Math.random() * (100 - 21 + 1)) + 21;
+  }
+
+  resetCardCounts() {
+    this.cardValueCounts = {};
+  }
+
+  getCardMultiplier(cardValue) {
+    // Получаем текущий счетчик для этого достоинства карты
+    const count = this.cardValueCounts[cardValue] || 0;
+    
+    // Увеличиваем счетчик
+    this.cardValueCounts[cardValue] = count + 1;
+    
+    // Возвращаем множитель: 1x, 1.5x, 2x, 2.5x, 3x...
+    if (count === 0) return 1.0;           // Первая карта
+    if (count === 1) return 1.5;           // Вторая карта
+    return 1.0 + (count * 0.5);           // Третья и далее: 2.0, 2.5, 3.0...
   }
 }
 

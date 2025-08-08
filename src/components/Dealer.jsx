@@ -1,5 +1,3 @@
-import React from 'react';
-
 const Card = ({ card, isFaceDown = false }) => {
   if (isFaceDown) {
     return <div className="card back-card">?</div>;
@@ -17,11 +15,18 @@ const Card = ({ card, isFaceDown = false }) => {
 
 const Dealer = ({ hand, score, showFirstCard }) => {
   const displayScore = showFirstCard ? '?' : score;
+  
+  const getHandContainerClass = () => {
+    const cardCount = hand.length;
+    if (cardCount >= 12) return 'hand-container many-cards';
+    if (cardCount >= 8) return 'hand-container medium-cards';
+    return 'hand-container';
+  };
 
   return (
     <div className="dealer-container">
       <h2>Dealer ({displayScore})</h2>
-      <div className="hand-container">
+      <div className={getHandContainerClass()}>
         {hand.map((card, index) => (
           <Card key={index} card={card} isFaceDown={showFirstCard && index === 0} />
         ))}

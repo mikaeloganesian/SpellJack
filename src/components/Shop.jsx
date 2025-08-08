@@ -43,7 +43,7 @@ const Shop = observer(() => {
         )}
       </div>
       <div className="card-description">
-        {description && <p>{description}</p>}
+        {<p>{description ? description : "Select a card to see info."}</p>}
       </div>
     </div>
   );
