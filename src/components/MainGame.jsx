@@ -26,15 +26,12 @@ const createPlayerDeck = (customCards = []) => {
 
 const createDealerDeck = () => {
   const newDeck = [];
-  const dealerValues = ['8', '9', '10', 'J', 'Q', 'K', 'A'];
   const suits = ['♠', '♥', '♦', '♣'];
   const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
   let idCounter = 2000;
   for (let suit of suits) {
     for (let value of values) {
-      if (dealerValues.includes(value)) {
-        newDeck.push({ id: idCounter++, value, suit, special: false });
-      }
+      newDeck.push({ id: idCounter++, value, suit, special: false });
     }
   }
   return shuffleDeck(newDeck);
@@ -101,8 +98,11 @@ const MainGame = observer(() => {
     const newShuffledPlayerDeck = createPlayerDeck(gameStore.playerDeck);
     const newShuffledDealerDeck = createDealerDeck();
     
+    // Генерируем новую случайную цель для игры
+    gameStore.generateNewTarget();
+    
     if (newShuffledPlayerDeck.length < 2 || newShuffledDealerDeck.length < 2) {
-      setWinner('Not enough cards in the deck to play!');
+      setWinner('Not enough cards in the deck to play! Add more cards in Deck Editor.');
       setIsGameActive(false);
       return;
     }
@@ -122,14 +122,16 @@ const MainGame = observer(() => {
   };
 
   const checkWinner = (finalPlayerScore, finalDealerScore) => {
-    if (gameStore.activeEffects.shield && finalPlayerScore > 21) {
-      finalPlayerScore = 21;
+    const target = gameStore.currentTarget;
+    
+    if (gameStore.activeEffects.shield && finalPlayerScore > target) {
+      finalPlayerScore = target;
       gameStore.activeEffects.shield = false;
     }
     
-    if (finalPlayerScore > 21) {
+    if (finalPlayerScore > target) {
       setWinner('Dealer wins!');
-    } else if (finalDealerScore > 21) {
+    } else if (finalDealerScore > target) {
       setWinner('Player wins!');
       gameStore.addCoins(10);
     } else if (finalPlayerScore === finalDealerScore) {
@@ -182,10 +184,10 @@ const MainGame = observer(() => {
   
       setIsAnimating(false);
   
-      if (newPlayerScore >= 21) {
+      if (newPlayerScore >= gameStore.currentTarget) {
         setIsPlayerTurn(false);
-        if (newPlayerScore === 21) {
-          setWinner('Blackjack! Player wins!');
+        if (newPlayerScore === gameStore.currentTarget) {
+          setWinner('Perfect! Player wins!');
           gameStore.addCoins(20);
           setIsGameActive(false);
         }
@@ -211,7 +213,19 @@ const MainGame = observer(() => {
       gameStore.activeEffects.removeDealerCard = false;
     }
     
-    while (newDealerScore < 17 && newDealerDeck.length > 0) {
+    // Адаптивная логика дилера в зависимости от цели
+    const target = gameStore.currentTarget;
+    let dealerThreshold;
+    
+    if (target <= 30) {
+      // Для низких целей - классическая логика блэкджека
+      dealerThreshold = 17;
+    } else {
+      // Для высоких целей - более агрессивная стратегия (85% от цели)
+      dealerThreshold = Math.floor(target * 0.85);
+    }
+    
+    while (newDealerScore < dealerThreshold && newDealerScore < target && newDealerDeck.length > 0) {
       newDealerHand.push(newDealerDeck.pop());
       newDealerScore = calculateScore(newDealerHand);
     }
@@ -226,6 +240,9 @@ const MainGame = observer(() => {
   return (
     <div className="main-game">
       <h1 className="header">Blackjack</h1>
+      <div className="game-target">
+        <h3>Target Score: {gameStore.currentTarget}</h3>
+      </div>
       <Dealer 
         hand={dealerHand} 
         score={dealerScore} 

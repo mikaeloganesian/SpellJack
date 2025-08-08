@@ -1,5 +1,3 @@
-import React from 'react';
-
 const Controls = ({ onHit, onStand, onNewGame, isGameActive }) => {
   return (
     <div className="controls-container">
