@@ -28,10 +28,24 @@ const generateStarterDeck = () => {
   return deck; // Возвращаем всю стартовую колоду (36 карт)
 };
 
+
+const generateStartedOwnedDeck = () => {
+  const suits = ['♠', '♥', '♦', '♣'];
+  const values = [ 'J', 'Q', 'K', 'A'];
+  const deck = [];
+  let idCounter = 10000;
+  for (let suit of suits) {
+    for (let value of values) {
+      deck.push({ id: idCounter++, value, suit, special: false });
+    }
+  }
+  return deck;
+}
+
 class GameStore {
   coins = 100;
   playerDeck = generateStarterDeck();        // Игровая колода (10 карт для игры)
-  playerOwnedCards = generateStandardDeck(); // Все купленные карты (коллекция)
+  playerOwnedCards = generateStartedOwnedDeck(); // Все купленные карты (коллекция)
   availableCards = specialCards;
   currentTarget = 21;                        // Текущая цель игры
 
@@ -71,8 +85,12 @@ class GameStore {
   }
 
   removeCardFromDeck(cardId) {
-    this.playerDeck = this.playerDeck.filter(card => card.id !== cardId);
+    const removed = this.playerDeck.find(c => c.id === cardId);
+    if (!removed) return;
+    this.playerDeck = this.playerDeck.filter(c => c.id !== cardId);
+    this.playerOwnedCards.push(removed);
   }
+
 
   buyCard(card) {
     if (this.coins >= card.cost) {
@@ -113,7 +131,7 @@ class GameStore {
   }
 
   generateNewTarget() {
-    this.currentTarget = Math.floor(Math.random() * (300 - 21 + 1)) + 21;
+    this.currentTarget = Math.floor(Math.random() * (100 - 21 + 1)) + 21;
   }
 }
 
