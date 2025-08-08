@@ -63,9 +63,10 @@ const calculateScore = (hand, isPlayerHand = true) => {
       cardValue = parseInt(card.value, 10);
     }
 
+    // Применяем множитель для масти только для игрока
     if (isPlayerHand) {
-      const multiplier = gameStore.getCardMultiplier(card.value);
-      cardValue = Math.floor(cardValue * multiplier);
+      const suitMultiplier = gameStore.getSuitMultiplier(card.suit);
+      cardValue = Math.floor(cardValue * suitMultiplier);
     }
 
     score += cardValue;
@@ -115,7 +116,7 @@ const MainGame = observer(() => {
     const shuffledDealerDeck = createDealerDeck();
 
     gameStore.generateNewTarget();
-    gameStore.resetCardCounts?.();
+    gameStore.generateSuitMultipliers();
 
     if (shuffledPlayerDeck.length < 2 || shuffledDealerDeck.length < 2) {
       setWinner('Not enough cards in the deck to play! Add more cards in Deck Editor.');
@@ -255,8 +256,32 @@ const MainGame = observer(() => {
       {/* Модалка с текущей колодой */}
       <ActualDeckControl visible={showDeck} onClose={() => setShowDeck(false)} />
 
-      <div className="game-target">
-        <h3>Target Score: {gameStore.currentTarget}</h3>
+      <div className="game-info">
+        <div className="game-target">
+          <h3>Target Score: {gameStore.currentTarget}</h3>
+        </div>
+        <div className="suit-multipliers">
+          <h4>Suit Multipliers:</h4>
+          <div className="multipliers-table">
+            <div className="multiplier-item">
+              <span className="suit-symbol">♠</span>
+              <span className="multiplier-value">x{gameStore.getSuitMultiplier('♠')}</span>
+            </div>
+            <div className="multiplier-item">
+              <span className="suit-symbol red-suit">♥</span>
+              <span className="multiplier-value">x{gameStore.getSuitMultiplier('♥')}</span>
+            </div>
+            <div className="multiplier-item">
+              <span className="suit-symbol red-suit">♦</span>
+              <span className="multiplier-value">x{gameStore.getSuitMultiplier('♦')}</span>
+            </div>
+            <div className="multiplier-item">
+              <span className="suit-symbol">♣</span>
+              <span className="multiplier-value">x{gameStore.getSuitMultiplier('♣')}</span>
+            </div>
+          </div>
+        </div>
+        
       </div>
 
       <Dealer
@@ -287,7 +312,7 @@ const MainGame = observer(() => {
       <Controls
         onHit={handleHit}
         onStand={handleStand}
-        onNewGame={() => setIsGameActive(true)}  // флаг, а раздача идёт из useEffect
+        onNewGame={startNewGame}
         isGameActive={isGameActive && isPlayerTurn}
       />
     </div>
