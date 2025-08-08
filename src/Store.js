@@ -128,6 +128,13 @@ class GameStore {
     }
   }
 
+  getSuitMultiplier(suit) {
+  // пример: по умолчанию все 1
+    const map = { '♠': 1, '♥': 1, '♦': 1, '♣': 1 };
+    return map[suit] ?? 1;
+  }
+
+
   removeDealerCardEffect() {
     this.activeEffects.removeDealerCard = false;
   }

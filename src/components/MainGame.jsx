@@ -63,10 +63,9 @@ const calculateScore = (hand, isPlayerHand = true) => {
       cardValue = parseInt(card.value, 10);
     }
 
-    // Применяем множитель только для игрока
     if (isPlayerHand) {
-      const suitMultiplier = gameStore.getSuitMultiplier(card.suit);
-      cardValue = Math.floor(cardValue * suitMultiplier);
+      const multiplier = gameStore.getCardMultiplier(card.value);
+      cardValue = Math.floor(cardValue * multiplier);
     }
 
     score += cardValue;
@@ -116,11 +115,9 @@ const MainGame = observer(() => {
     const shuffledDealerDeck = createDealerDeck();
 
     gameStore.generateNewTarget();
-    
-    // Сбрасываем счетчики повторяющихся карт для новой игры
-    gameStore.resetCardCounts();
-    
-    if (newShuffledPlayerDeck.length < 2 || newShuffledDealerDeck.length < 2) {
+    gameStore.resetCardCounts?.();
+
+    if (shuffledPlayerDeck.length < 2 || shuffledDealerDeck.length < 2) {
       setWinner('Not enough cards in the deck to play! Add more cards in Deck Editor.');
       setIsGameActive(false);
       return;
@@ -254,6 +251,10 @@ const MainGame = observer(() => {
   return (
     <div className="main-game">
       <h1 className="header">Blackjack</h1>
+
+      {/* Модалка с текущей колодой */}
+      <ActualDeckControl visible={showDeck} onClose={() => setShowDeck(false)} />
+
       <div className="game-target">
         <h3>Target Score: {gameStore.currentTarget}</h3>
       </div>
