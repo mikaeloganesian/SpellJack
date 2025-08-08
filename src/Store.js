@@ -49,6 +49,9 @@ class GameStore {
   availableCards = specialCards;
   currentTarget = 21;                        // Текущая цель игры
 
+  // Отслеживание повторяющихся карт в текущей игре
+  cardValueCounts = {};                      // {value: count} для прогрессивных множителей
+
   activeEffects = {
     shield: false,
     revealDealerCard: false,
@@ -62,6 +65,7 @@ class GameStore {
       playerOwnedCards: observable,
       availableCards: observable,
       currentTarget: observable,
+      cardValueCounts: observable,
       activeEffects: observable,
       addCoins: action,
       addCardToDeck: action,
@@ -71,6 +75,8 @@ class GameStore {
       removeDealerCardEffect: action,
       addExtraCardEffect: action,
       generateNewTarget: action,
+      resetCardCounts: action,
+      getCardMultiplier: action,
     });
   }
 
@@ -132,6 +138,23 @@ class GameStore {
 
   generateNewTarget() {
     this.currentTarget = Math.floor(Math.random() * (100 - 21 + 1)) + 21;
+  }
+
+  resetCardCounts() {
+    this.cardValueCounts = {};
+  }
+
+  getCardMultiplier(cardValue) {
+    // Получаем текущий счетчик для этого достоинства карты
+    const count = this.cardValueCounts[cardValue] || 0;
+    
+    // Увеличиваем счетчик
+    this.cardValueCounts[cardValue] = count + 1;
+    
+    // Возвращаем множитель: 1x, 1.5x, 2x, 2.5x, 3x...
+    if (count === 0) return 1.0;           // Первая карта
+    if (count === 1) return 1.5;           // Вторая карта
+    return 1.0 + (count * 0.5);           // Третья и далее: 2.0, 2.5, 3.0...
   }
 }
 

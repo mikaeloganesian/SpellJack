@@ -45,7 +45,7 @@ const shuffleDeck = (deck) => {
   return deck;
 };
 
-const calculateScore = (hand) => {
+const calculateScore = (hand, isPlayerHand = true) => {
   let score = 0;
   let hasAce = false;
 
@@ -53,14 +53,24 @@ const calculateScore = (hand) => {
     if (card.special) {
       continue;
     }
+    
+    let cardValue = 0;
     if (['J', 'Q', 'K'].includes(card.value)) {
-      score += 10;
+      cardValue = 10;
     } else if (card.value === 'A') {
       hasAce = true;
-      score += 11;
+      cardValue = 11;
     } else {
-      score += parseInt(card.value);
+      cardValue = parseInt(card.value);
     }
+
+    // Применяем множитель только для игрока
+    if (isPlayerHand) {
+      const multiplier = gameStore.getCardMultiplier(card.value);
+      cardValue = Math.floor(cardValue * multiplier);
+    }
+
+    score += cardValue;
   }
 
   if (hasAce && score > 21) {
@@ -101,6 +111,9 @@ const MainGame = observer(() => {
     // Генерируем новую случайную цель для игры
     gameStore.generateNewTarget();
     
+    // Сбрасываем счетчики повторяющихся карт для новой игры
+    gameStore.resetCardCounts();
+    
     if (newShuffledPlayerDeck.length < 2 || newShuffledDealerDeck.length < 2) {
       setWinner('Not enough cards in the deck to play! Add more cards in Deck Editor.');
       setIsGameActive(false);
@@ -114,8 +127,8 @@ const MainGame = observer(() => {
     setDealerDeck(newShuffledDealerDeck);
     setPlayerHand(newPlayerHand);
     setDealerHand(newDealerHand);
-    setPlayerScore(calculateScore(newPlayerHand));
-    setDealerScore(calculateScore(newDealerHand));
+    setPlayerScore(calculateScore(newPlayerHand, true));
+    setDealerScore(calculateScore(newDealerHand, false));
     setIsPlayerTurn(true);
     setWinner('');
     setIsGameActive(true);
@@ -164,7 +177,7 @@ const MainGame = observer(() => {
       }
 
       let newPlayerHand = [...playerHand, newCard];
-      let newPlayerScore = calculateScore(newPlayerHand);
+      let newPlayerScore = calculateScore(newPlayerHand, true);
 
       if (gameStore.activeEffects.extraCard) {
         if (newPlayerDeck.length > 0) {
@@ -173,7 +186,7 @@ const MainGame = observer(() => {
             gameStore.applyCardEffect(extraCard.effect);
           }
           newPlayerHand.push(extraCard);
-          newPlayerScore = calculateScore(newPlayerHand);
+          newPlayerScore = calculateScore(newPlayerHand, true);
         }
         gameStore.activeEffects.extraCard = false;
       }
@@ -203,12 +216,12 @@ const MainGame = observer(() => {
   const handleDealerTurn = () => {
     let newDealerDeck = [...dealerDeck];
     let newDealerHand = [...dealerHand];
-    let newDealerScore = calculateScore(newDealerHand);
+    let newDealerScore = calculateScore(newDealerHand, false);
     
     if (gameStore.activeEffects.removeDealerCard) {
       if (newDealerHand.length > 0) {
         newDealerHand.pop();
-        newDealerScore = calculateScore(newDealerHand);
+        newDealerScore = calculateScore(newDealerHand, false);
       }
       gameStore.activeEffects.removeDealerCard = false;
     }
@@ -227,7 +240,7 @@ const MainGame = observer(() => {
     
     while (newDealerScore < dealerThreshold && newDealerScore < target && newDealerDeck.length > 0) {
       newDealerHand.push(newDealerDeck.pop());
-      newDealerScore = calculateScore(newDealerHand);
+      newDealerScore = calculateScore(newDealerHand, false);
     }
 
     setDealerDeck(newDealerDeck);
