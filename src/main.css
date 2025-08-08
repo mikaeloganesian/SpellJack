@@ -307,13 +307,11 @@ body {
 }
 
 .remove-card-button {
-  background-color: #c0392b;
   border-color: #e74c3c;
   color: #fff;
 }
 
 .remove-card-button:hover {
-  background-color: #e74c3c;
   color: #fff;
 }
 
@@ -528,9 +526,8 @@ p {
 }
 
 .remove-card-button {
-  background-color: #c0392b;
+  color: #e74c3c;
   border-color: #e74c3c;
-  color: #fff;
 }
 
 .remove-card-button:hover {

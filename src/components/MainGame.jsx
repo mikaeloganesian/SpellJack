@@ -236,7 +236,6 @@ const MainGame = observer(() => {
           <div className="card back-card">?</div>
         </div>
       {winner && <h2 className="winner-message">{winner}</h2>}
-
         <Player hand={playerHand} score={playerScore} />
       </div>
       <Controls
