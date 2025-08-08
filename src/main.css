@@ -713,3 +713,156 @@ p {
 .hand-container.many-cards .card-suit {
   font-size: 0.8em;
 }
+
+/* Перекрывающий фон модалки */
+.actual-deck-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 11, 18, 0.45);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+  z-index: 1000;
+}
+
+.actual-deck-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Панель-«шторка» */
+.actual-deck-panel {
+  position: absolute;
+  right: 24px;
+  top: 80px;
+  width: min(760px, 92vw);
+  max-height: 72vh;
+  background: #0f1116;
+  color: #e8ecf3;
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transform: translateY(-8px) scale(0.98);
+  opacity: 0;
+  transition: transform .2s ease, opacity .2s ease;
+  overflow: hidden;
+}
+
+.actual-deck-overlay.open .actual-deck-panel {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+/* Хедер */
+.deck-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.deck-title-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.deck-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+
+.deck-subtitle {
+  color: #a7b0be;
+  font-size: 12px;
+}
+
+/* Кнопка закрытия */
+.deck-close {
+  background: transparent;
+  border: 0;
+  color: #e8ecf3;
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.deck-close:hover { background: rgba(255,255,255,0.08); }
+
+/* Сетка карт */
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 12px;
+  padding: 16px 16px 20px;
+  overflow: auto;
+  max-height: calc(72vh - 56px);
+}
+
+/* Плитка карты */
+.card-tile {
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, #1a1f2a 0%, #10131a 100%);
+  aspect-ratio: 3 / 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  letter-spacing: .3px;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25) inset;
+}
+
+.card-tile:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.26), 0 4px 16px rgba(0,0,0,0.25) inset;
+}
+
+.card-tile .tile-value {
+  font-weight: 800;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.card-tile .tile-suit {
+  font-size: 18px;
+  margin-top: 2px;
+  opacity: 0.9;
+}
+
+.card-tile.red {
+  color: #ff6b6b;
+}
+
+.card-tile.special {
+  outline: 2px dashed #ffd166;
+}
+.card-tile.special::after {
+  content: '★';
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 14px;
+  opacity: 0.85;
+  color: #ffd166;
+}
+
+/* Пустая колода */
+.deck-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #a7b0be;
+  padding: 24px 0 12px;
+  font-size: 14px;
+}
+
+/* Подсказка: стопка карт кликабельна */
+.deck-stack { cursor: pointer; }

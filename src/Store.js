@@ -75,7 +75,8 @@ class GameStore {
       removeDealerCardEffect: action,
       addExtraCardEffect: action,
       generateNewTarget: action,
-      generateSuitMultipliers: action,
+      resetCardCounts: action,
+      getCardMultiplier: action,
     });
   }
 
@@ -139,19 +140,21 @@ class GameStore {
     this.currentTarget = Math.floor(Math.random() * (100 - 21 + 1)) + 21;
   }
 
-  generateSuitMultipliers() {
-    const suits = ['♠', '♥', '♦', '♣'];
-    this.suitMultipliers = {};
-    
-    suits.forEach(suit => {
-      // Генерируем коэффициент от 1.0 до 4.0 с одним знаком после запятой
-      const multiplier = Math.round((Math.random() * 3 + 1) * 10) / 10;
-      this.suitMultipliers[suit] = multiplier;
-    });
+  resetCardCounts() {
+    this.cardValueCounts = {};
   }
 
-  getSuitMultiplier(suit) {
-    return this.suitMultipliers[suit] || 1.0;
+  getCardMultiplier(cardValue) {
+    // Получаем текущий счетчик для этого достоинства карты
+    const count = this.cardValueCounts[cardValue] || 0;
+    
+    // Увеличиваем счетчик
+    this.cardValueCounts[cardValue] = count + 1;
+    
+    // Возвращаем множитель: 1x, 1.5x, 2x, 2.5x, 3x...
+    if (count === 0) return 1.0;           // Первая карта
+    if (count === 1) return 1.5;           // Вторая карта
+    return 1.0 + (count * 0.5);           // Третья и далее: 2.0, 2.5, 3.0...
   }
 }
 
