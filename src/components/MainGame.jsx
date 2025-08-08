@@ -64,10 +64,10 @@ const calculateScore = (hand, isPlayerHand = true) => {
       cardValue = parseInt(card.value);
     }
 
-    // Применяем множитель только для игрока
+    // Применяем множитель масти только для игрока
     if (isPlayerHand) {
-      const multiplier = gameStore.getCardMultiplier(card.value);
-      cardValue = Math.floor(cardValue * multiplier);
+      const suitMultiplier = gameStore.getSuitMultiplier(card.suit);
+      cardValue = Math.floor(cardValue * suitMultiplier);
     }
 
     score += cardValue;
@@ -111,8 +111,8 @@ const MainGame = observer(() => {
     // Генерируем новую случайную цель для игры
     gameStore.generateNewTarget();
     
-    // Сбрасываем счетчики повторяющихся карт для новой игры
-    gameStore.resetCardCounts();
+    // Генерируем новые коэффициенты для мастей
+    gameStore.generateSuitMultipliers();
     
     if (newShuffledPlayerDeck.length < 2 || newShuffledDealerDeck.length < 2) {
       setWinner('Not enough cards in the deck to play! Add more cards in Deck Editor.');
@@ -253,8 +253,31 @@ const MainGame = observer(() => {
   return (
     <div className="main-game">
       <h1 className="header">Blackjack</h1>
-      <div className="game-target">
-        <h3>Target Score: {gameStore.currentTarget}</h3>
+      <div className="game-info">
+        <div className="game-target">
+          <h3>Target Score: {gameStore.currentTarget}</h3>
+        </div>
+        <div className="suit-multipliers">
+          <h4>Suit Multipliers:</h4>
+          <div className="multipliers-table">
+            <div className="multiplier-item">
+              <span className="suit-symbol">♠</span>
+              <span className="multiplier-value">x{gameStore.getSuitMultiplier('♠')}</span>
+            </div>
+            <div className="multiplier-item">
+              <span className="suit-symbol red-suit">♥</span>
+              <span className="multiplier-value">x{gameStore.getSuitMultiplier('♥')}</span>
+            </div>
+            <div className="multiplier-item">
+              <span className="suit-symbol red-suit">♦</span>
+              <span className="multiplier-value">x{gameStore.getSuitMultiplier('♦')}</span>
+            </div>
+            <div className="multiplier-item">
+              <span className="suit-symbol">♣</span>
+              <span className="multiplier-value">x{gameStore.getSuitMultiplier('♣')}</span>
+            </div>
+          </div>
+        </div>
       </div>
       <Dealer 
         hand={dealerHand} 

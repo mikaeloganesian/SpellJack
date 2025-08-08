@@ -1,9 +1,9 @@
 import React from 'react';
 import { gameStore } from '../Store';
 
-const Card = ({ card, multiplier, bonusPoints }) => {
+const Card = ({ card, suitMultiplier, bonusPoints }) => {
   const isRed = card.suit === '♥' || card.suit === '♦';
-  const hasBonus = multiplier > 1.0;
+  const hasBonus = suitMultiplier > 1.0;
   
   return (
     <div className={`card ${isRed ? 'red-card' : ''} ${hasBonus ? 'bonus-card' : ''}`}>
@@ -11,7 +11,7 @@ const Card = ({ card, multiplier, bonusPoints }) => {
       <div className="card-suit">{card.suit}</div>
       {hasBonus && (
         <div className="bonus-indicator">
-          x{multiplier.toFixed(1)} (+{bonusPoints})
+          x{suitMultiplier} (+{bonusPoints})
         </div>
       )}
     </div>
@@ -26,22 +26,11 @@ const Player = ({ hand, score }) => {
     return 'hand-container';
   };
 
-  // Функция для вычисления множителя карты на основе позиции в руке
-  const getCardMultiplierInfo = (card, cardIndex) => {
-    if (card.special) return { multiplier: 1.0, bonusPoints: 0 };
+  // Функция для вычисления бонусных очков карты по масти
+  const getCardBonusInfo = (card) => {
+    if (card.special) return { suitMultiplier: 1.0, bonusPoints: 0 };
     
-    // Считаем, сколько карт с таким же достоинством уже было до этой карты
-    let countBefore = 0;
-    for (let i = 0; i < cardIndex; i++) {
-      if (hand[i].value === card.value) {
-        countBefore++;
-      }
-    }
-    
-    // Вычисляем множитель
-    let multiplier = 1.0;
-    if (countBefore === 1) multiplier = 1.5;           // Вторая карта
-    else if (countBefore > 1) multiplier = 1.0 + (countBefore * 0.5); // Третья и далее
+    const suitMultiplier = gameStore.getSuitMultiplier(card.suit);
     
     // Вычисляем базовые очки карты
     let baseValue = 0;
@@ -53,9 +42,9 @@ const Player = ({ hand, score }) => {
       baseValue = parseInt(card.value);
     }
     
-    const bonusPoints = Math.floor(baseValue * multiplier) - baseValue;
+    const bonusPoints = Math.floor(baseValue * suitMultiplier) - baseValue;
     
-    return { multiplier, bonusPoints };
+    return { suitMultiplier, bonusPoints };
   };
 
   return (
@@ -63,12 +52,12 @@ const Player = ({ hand, score }) => {
       <h2>Player ({score})</h2>
       <div className={getHandContainerClass()}>
         {hand.map((card, index) => {
-          const { multiplier, bonusPoints } = getCardMultiplierInfo(card, index);
+          const { suitMultiplier, bonusPoints } = getCardBonusInfo(card);
           return (
             <Card 
               key={index} 
               card={card} 
-              multiplier={multiplier}
+              suitMultiplier={suitMultiplier}
               bonusPoints={bonusPoints}
             />
           );
