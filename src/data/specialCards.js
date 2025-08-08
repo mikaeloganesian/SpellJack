@@ -16,7 +16,7 @@ export const specialCards = [
     cost: 75,
     special: true,
     name: 'Карта Щита',
-    description: 'Дает игроку щит от проигрыша, если он набирает больше 21 очка.',
+    description: 'Дает игроку щит от проигрыша, если он превышает целевой счёт.',
     effect: 'shield',
   },
   {

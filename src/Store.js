@@ -14,11 +14,26 @@ const generateStandardDeck = () => {
   return deck;
 };
 
+const generateStarterDeck = () => {
+  // Стартовая колода: простые карты 2-10 всех мастей (полная колода)
+  const suits = ['♠', '♥', '♦', '♣'];
+  const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10'];
+  const deck = [];
+  let idCounter = 100;
+  for (let suit of suits) {
+    for (let value of values) {
+      deck.push({ id: idCounter++, value, suit, special: false });
+    }
+  }
+  return deck; // Возвращаем всю стартовую колоду (36 карт)
+};
+
 class GameStore {
   coins = 100;
-  playerDeck = generateStandardDeck();
-  playerOwnedCards = generateStandardDeck();
+  playerDeck = generateStarterDeck();        // Игровая колода (10 карт для игры)
+  playerOwnedCards = generateStandardDeck(); // Все купленные карты (коллекция)
   availableCards = specialCards;
+  currentTarget = 21;                        // Текущая цель игры
 
   activeEffects = {
     shield: false,
@@ -32,6 +47,7 @@ class GameStore {
       playerDeck: observable,
       playerOwnedCards: observable,
       availableCards: observable,
+      currentTarget: observable,
       activeEffects: observable,
       addCoins: action,
       addCardToDeck: action,
@@ -40,6 +56,7 @@ class GameStore {
       applyCardEffect: action,
       removeDealerCardEffect: action,
       addExtraCardEffect: action,
+      generateNewTarget: action,
     });
   }
 
@@ -48,7 +65,7 @@ class GameStore {
   }
 
   addCardToDeck(card) {
-    if (this.playerDeck.length < 10) {
+    if (this.playerDeck.length < 52) {
       this.playerDeck.push(card);
     }
   }
@@ -93,6 +110,10 @@ class GameStore {
 
   addExtraCardEffect() {
     this.activeEffects.extraCard = false;
+  }
+
+  generateNewTarget() {
+    this.currentTarget = Math.floor(Math.random() * (300 - 21 + 1)) + 21;
   }
 }
 
