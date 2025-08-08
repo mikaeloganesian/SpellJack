@@ -12,10 +12,10 @@ const ActualDeckControl = observer(({ visible, onClose }) => {
       >
         <div className="deck-header">
           <div className="deck-title-wrap">
-            <h3 className="deck-title">Текущая колода</h3>
-            <span className="deck-subtitle">{deck.length} карт</span>
+            <h3 className="deck-title">Current deck</h3>
+            <span className="deck-subtitle">{deck.length} cards</span>
           </div>
-          <button className="deck-close" onClick={onClose}>Закрыть</button>
+          <button className="deck-close" onClick={onClose}>Close</button>
         </div>
 
         <div className="deck-grid">
