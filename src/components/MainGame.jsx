@@ -5,6 +5,7 @@ import Player from './Player';
 import Dealer from './Dealer';
 import Controls from './Controls';
 import ActualDeckControl from './ActualDeckControl';
+import { useVK } from '../hooks/useVK';
 
 const createPlayerDeck = (customCards = []) => {
   const newDeck = [];
@@ -77,6 +78,9 @@ const calculateScore = (hand, isPlayerHand = true) => {
 };
 
 const MainGame = observer(() => {
+  // VK функциональность
+  const { vibrate, shareScore, sendStats } = useVK();
+  
   // dealer deck остаётся локально, колода игрока — только в store
   const [dealerDeck, setDealerDeck] = useState([]);
   const [playerHand, setPlayerHand] = useState([]);
@@ -149,19 +153,39 @@ const MainGame = observer(() => {
       gameStore.activeEffects.shield = false;
     }
 
+    let gameResult = '';
     if (finalPlayerScore > target) {
       setWinner('Dealer wins!');
+      gameResult = 'loss';
+      vibrate('error');
     } else if (finalDealerScore > target) {
       setWinner('Player wins!');
       gameStore.addCoins(10);
+      gameResult = 'win';
+      vibrate('success');
     } else if (finalPlayerScore === finalDealerScore) {
       setWinner('Push!');
+      gameResult = 'draw';
+      vibrate('light');
     } else if (finalPlayerScore > finalDealerScore) {
       setWinner('Player wins!');
       gameStore.addCoins(10);
+      gameResult = 'win';
+      vibrate('success');
     } else {
       setWinner('Dealer wins!');
+      gameResult = 'loss';
+      vibrate('error');
     }
+    
+    // Отправляем статистику в VK
+    sendStats('game_finished', {
+      result: gameResult,
+      player_score: finalPlayerScore,
+      dealer_score: finalDealerScore,
+      target: target
+    });
+    
     setIsGameActive(false);
   };
 
@@ -305,7 +329,20 @@ const MainGame = observer(() => {
           <div className="card back-card">?</div>
         </div>
 
-        {winner && <h2 className="winner-message">{winner}</h2>}
+        {winner && (
+          <div className="winner-section">
+            <h2 className="winner-message">{winner}</h2>
+            {(winner.includes('Player wins!')) && (
+              <button 
+                className="share-button"
+                onClick={() => shareScore(playerScore)}
+                title="Поделиться результатом"
+              >
+                📤 Поделиться
+              </button>
+            )}
+          </div>
+        )}
         <Player hand={playerHand} score={playerScore} />
       </div>
 
