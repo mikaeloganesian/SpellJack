@@ -1,8 +1,9 @@
 import { observer } from 'mobx-react-lite';
 import { gameStore } from '../Store';
 
-const ActualDeckControl = observer(({ visible, onClose }) => {
-  const deck = gameStore.playerDeck;
+const ActualDeckControl = observer(({ visible, onClose, deck }) => {
+  // Используем переданную колоду или fallback на колоду из store
+  const displayDeck = deck || gameStore.playerDeck;
 
   return (
     <div className={`actual-deck-overlay ${visible ? 'open' : ''}`} onClick={onClose}>
@@ -13,13 +14,13 @@ const ActualDeckControl = observer(({ visible, onClose }) => {
         <div className="deck-header">
           <div className="deck-title-wrap">
             <h3 className="deck-title">Current deck</h3>
-            <span className="deck-subtitle">{deck.length} cards</span>
+            <span className="deck-subtitle">{displayDeck.length} cards</span>
           </div>
           <button className="deck-close" onClick={onClose}>Close</button>
         </div>
 
         <div className="deck-grid">
-          {deck.map((card) => {
+          {displayDeck.map((card) => {
             const isRed = card.suit === '♥' || card.suit === '♦';
             return (
               <div
@@ -36,7 +37,7 @@ const ActualDeckControl = observer(({ visible, onClose }) => {
               </div>
             );
           })}
-          {deck.length === 0 && (
+          {displayDeck.length === 0 && (
             <div className="deck-empty">Колода пуста</div>
           )}
         </div>

@@ -83,6 +83,7 @@ const MainGame = observer(() => {
   
   // dealer deck остаётся локально, колода игрока — только в store
   const [dealerDeck, setDealerDeck] = useState([]);
+  const [currentGamePlayerDeck, setCurrentGamePlayerDeck] = useState([]); // Локальная колода для текущей игры
   const [playerHand, setPlayerHand] = useState([]);
   const [dealerHand, setDealerHand] = useState([]);
   const [playerScore, setPlayerScore] = useState(0);
@@ -128,12 +129,13 @@ const MainGame = observer(() => {
       return;
     }
 
-    // раздаём по 2 карты, остаток колоды игрока пишем в store
-    const deckAfterDeal = [...shuffledPlayerDeck];
-    const newPlayerHand = [deckAfterDeal.pop(), deckAfterDeal.pop()];
+    // раздаём по 2 карты, остаток колоды для текущей игры (НЕ сохраняем в store!)
+    const currentGameDeck = [...shuffledPlayerDeck];
+    const newPlayerHand = [currentGameDeck.pop(), currentGameDeck.pop()];
     const newDealerHand = [shuffledDealerDeck.pop(), shuffledDealerDeck.pop()];
 
-    gameStore.playerDeck = deckAfterDeal;
+    // Сохраняем остаток колоды только для ТЕКУЩЕЙ игры, НЕ в store
+    setCurrentGamePlayerDeck(currentGameDeck);
 
     setDealerDeck(shuffledDealerDeck);
     setPlayerHand(newPlayerHand);
@@ -190,9 +192,9 @@ const MainGame = observer(() => {
   };
 
   const drawFromPlayerDeck = () => {
-    const deck = [...gameStore.playerDeck];
+    const deck = [...currentGamePlayerDeck];
     const card = deck.pop() || null;
-    gameStore.playerDeck = deck; // триггерим MobX
+    setCurrentGamePlayerDeck(deck); // обновляем локальную колоду текущей игры
     return card;
   };
 
@@ -278,7 +280,11 @@ const MainGame = observer(() => {
       <h1 className="header">Blackjack</h1>
 
       {/* Модалка с текущей колодой */}
-      <ActualDeckControl visible={showDeck} onClose={() => setShowDeck(false)} />
+      <ActualDeckControl 
+        visible={showDeck} 
+        onClose={() => setShowDeck(false)} 
+        deck={currentGamePlayerDeck}
+      />
 
       <div className="game-info">
         <div className="game-target">
