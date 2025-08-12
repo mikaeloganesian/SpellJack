@@ -5,6 +5,7 @@ import Player from './Player';
 import Dealer from './Dealer';
 import Controls from './Controls';
 import ActualDeckControl from './ActualDeckControl';
+import SpecialCardsPanel from './SpecialCardsPanel';
 import { useVK } from '../hooks/useVK';
 
 const createPlayerDeck = (customCards = []) => {
@@ -116,6 +117,9 @@ const MainGame = observer(() => {
   }, [showDeck]);
 
   const startNewGame = () => {
+    // Сброс эффектов специальных карт
+    gameStore.resetGameEffects();
+    
     // создаём новую перемешанную колоду игрока из выбранных в редакторе карт (store)
     const shuffledPlayerDeck = createPlayerDeck(gameStore.playerDeck);
     const shuffledDealerDeck = createDealerDeck();
@@ -202,6 +206,9 @@ const MainGame = observer(() => {
     if (!isGameActive || !isPlayerTurn || isAnimating) return;
 
     setIsAnimating(true);
+
+    // Применяем автоматические эффекты специальных карт при взятии карты
+    gameStore.applyAutoEffects();
 
     setTimeout(() => {
       const newCard = drawFromPlayerDeck();
@@ -351,6 +358,9 @@ const MainGame = observer(() => {
         )}
         <Player hand={playerHand} score={playerScore} />
       </div>
+
+      {/* Панель специальных карт */}
+      <SpecialCardsPanel store={gameStore} />
 
       <Controls
         onHit={handleHit}

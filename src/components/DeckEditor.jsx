@@ -17,6 +17,21 @@ const DeckEditor = observer(() => {
     );
   };
 
+  const SpecialCard = ({ card, onClick, buttonText, isAddedToDeck }) => {
+    const buttonClass = isAddedToDeck ? 'remove-card-button' : 'add-card-button';
+    
+    return (
+      <div className="deck-card special">
+        <div className="special-card-display">
+          <div className="card-emoji">{card.value}</div>
+          <div className="card-name">{card.id}</div>
+          <div className="activation-type">{card.activationType}</div>
+        </div>
+        <button className={buttonClass} onClick={() => onClick(card.id)}>{buttonText}</button>
+      </div>
+    );
+  };
+
   const cardsNotInDeck = gameStore.playerOwnedCards.filter(
     (card) => !gameStore.playerDeck.some((deckCard) => deckCard.id === card.id)
   );
@@ -44,12 +59,32 @@ const DeckEditor = observer(() => {
           )}
         </div>
       </div>
+
+      {/* Раздел специальных карт */}
+      <div className="special-deck-section">
+        <h3>Специальные карты ({gameStore.activeSpecialCards.length}/3)</h3>
+        <div className="special-deck-cards">
+          {gameStore.activeSpecialCards.length > 0 ? (
+            gameStore.activeSpecialCards.map((card) => (
+              <SpecialCard 
+                key={card.id} 
+                card={card} 
+                onClick={() => gameStore.removeSpecialCardFromDeck(card.id)} 
+                buttonText="-" 
+                isAddedToDeck={true}
+              />
+            ))
+          ) : (
+            <p className="empty-message">Нет активных специальных карт</p>
+          )}
+        </div>
+      </div>
       
       <div className="collection-section">
         <h3>All My Cards</h3>
         <div className="collection-cards">
-          {cardsNotInDeck.length > 0 ? (
-            cardsNotInDeck.map((card) => (
+          {cardsNotInDeck.filter(card => !card.type || card.type !== 'special').length > 0 ? (
+            cardsNotInDeck.filter(card => !card.type || card.type !== 'special').map((card) => (
               <Card 
                 key={card.id} 
                 card={card} 
@@ -60,6 +95,38 @@ const DeckEditor = observer(() => {
             ))
           ) : (
             <p className="empty-message">All your cards are in the deck!</p>
+          )}
+        </div>
+      </div>
+
+      {/* Раздел доступных специальных карт */}
+      <div className="special-collection-section">
+        <h3>Доступные специальные карты</h3>
+        <div className="special-collection-cards">
+          {gameStore.playerOwnedCards.filter(card => 
+            card.type === 'special' && 
+            !gameStore.activeSpecialCards.some(activeCard => activeCard.id === card.id)
+          ).length > 0 ? (
+            gameStore.playerOwnedCards.filter(card => 
+              card.type === 'special' && 
+              !gameStore.activeSpecialCards.some(activeCard => activeCard.id === card.id)
+            ).map((card) => (
+              <SpecialCard 
+                key={card.id} 
+                card={card} 
+                onClick={() => {
+                  if (gameStore.activeSpecialCards.length >= 3) {
+                    alert('Максимум 3 специальные карты в колоде!');
+                    return;
+                  }
+                  gameStore.addSpecialCardToDeck(card);
+                }} 
+                buttonText="+" 
+                isAddedToDeck={false}
+              />
+            ))
+          ) : (
+            <p className="empty-message">Все специальные карты уже в колоде!</p>
           )}
         </div>
       </div>
