@@ -21,11 +21,10 @@ const DeckEditor = observer(() => {
     const buttonClass = isAddedToDeck ? 'remove-card-button' : 'add-card-button';
     
     return (
-      <div className="deck-card special">
-        <div className="special-card-display">
-          <div className="card-emoji">{card.value}</div>
-          <div className="card-name">{card.id}</div>
-          <div className="activation-type">{card.activationType}</div>
+      <div className="deck-card">
+        <div className="card special-card">
+          <div className="card-value">{card.value}</div>
+          <div className="card-suit">{card.name}</div>
         </div>
         <button className={buttonClass} onClick={() => onClick(card.id)}>{buttonText}</button>
       </div>
@@ -61,9 +60,9 @@ const DeckEditor = observer(() => {
       </div>
 
       {/* Раздел специальных карт */}
-      <div className="special-deck-section">
+      <div className="deck-section">
         <h3>Специальные карты ({gameStore.activeSpecialCards.length}/3)</h3>
-        <div className="special-deck-cards">
+        <div className="deck-cards">
           {gameStore.activeSpecialCards.length > 0 ? (
             gameStore.activeSpecialCards.map((card) => (
               <SpecialCard 
@@ -100,9 +99,9 @@ const DeckEditor = observer(() => {
       </div>
 
       {/* Раздел доступных специальных карт */}
-      <div className="special-collection-section">
+      <div className="collection-section">
         <h3>Доступные специальные карты</h3>
-        <div className="special-collection-cards">
+        <div className="collection-cards">
           {gameStore.playerOwnedCards.filter(card => 
             card.type === 'special' && 
             !gameStore.activeSpecialCards.some(activeCard => activeCard.id === card.id)

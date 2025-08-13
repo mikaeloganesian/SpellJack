@@ -20,7 +20,7 @@ export const specialCards = [
     type: 'special',
     name: 'Щит перегруза',
     description: 'При переборе сбрасывает последнюю карту и продолжает игру.',
-    effect: 'shieldOverload',
+    effect: 'shield',
     activationType: 'passive' // срабатывает автоматически при переборе
   },
   {
@@ -68,7 +68,7 @@ export const specialCards = [
     special: true,
     type: 'special',
     name: 'Тузовая броня',
-    description: 'Один туз не учитывается при переборе.',
+    description: 'Дает дополнительную защиту от перебора: один туз может считаться за 1 очко даже после стандартного снижения.',
     effect: 'aceArmor',
     activationType: 'passive'
   },
@@ -124,7 +124,7 @@ export const specialCards = [
     id: 'special-11',
     value: '🔥',
     suit: '✦',
-    cost: 110,
+    cost: 100,
     special: true,
     type: 'special',
     name: 'Огненный туз',

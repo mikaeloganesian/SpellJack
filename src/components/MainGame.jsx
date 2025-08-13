@@ -50,7 +50,7 @@ const shuffleDeck = (deck) => {
 
 const calculateScore = (hand, isPlayerHand = true) => {
   let score = 0;
-  let hasAce = false;
+  let aces = 0;
 
   for (let card of hand) {
     if (card.special) continue;
@@ -59,8 +59,14 @@ const calculateScore = (hand, isPlayerHand = true) => {
     if (['J', 'Q', 'K'].includes(card.value)) {
       cardValue = 10;
     } else if (card.value === 'A') {
-      hasAce = true;
-      cardValue = 11;
+      aces++;
+      // Проверяем эффект "Огненный туз"
+      if (gameStore.activeEffects.fireAce) {
+        cardValue = 12;
+        console.log("Огненный туз активен: " + cardValue);
+      } else {
+        cardValue = 11;
+      }
     } else {
       cardValue = parseInt(card.value, 10);
     }
@@ -72,9 +78,31 @@ const calculateScore = (hand, isPlayerHand = true) => {
     }
 
     score += cardValue;
+    console.log(`Карта: ${card.value}${card.suit}, Значение: ${cardValue}, Текущий счёт: ${score}`);
   }
 
-  if (hasAce && score > 21) score -= 10;
+  // Стандартная логика для тузов: если есть тузы и перебор, 
+  // превращаем тузы из 11/12 в 1 очко по одному, пока не уберем перебор или не закончатся тузы
+  let acesAsEleven = aces;
+  while (acesAsEleven > 0 && score > gameStore.currentTarget) {
+    if (gameStore.activeEffects.fireAce) {
+      score -= 11; // Один туз становится 1 вместо 12 (12-1=11)
+    } else {
+      score -= 10; // Один туз становится 1 вместо 11 (11-1=10)
+    }
+    acesAsEleven--;
+  }
+  
+  // Тузовая броня: если у игрока есть эффект aceArmor и всё ещё перебор, 
+  // можем "спасти" еще один туз (но только если у нас есть тузы)
+  if (isPlayerHand && gameStore.activeEffects.aceArmor && aces > 0 && score > gameStore.currentTarget) {
+    if (gameStore.activeEffects.fireAce) {
+      score -= 11; // Дополнительная защита от Тузовой брони (12-1=11)
+    } else {
+      score -= 10; // Дополнительная защита от Тузовой брони (11-1=10)
+    }
+  }
+  
   return score;
 };
 
@@ -96,6 +124,16 @@ const MainGame = observer(() => {
 
   // модалка с текущей колодой
   const [showDeck, setShowDeck] = useState(false);
+
+  // Состояние для карты "Обмен удачи"
+  const [isCardSelectionMode, setIsCardSelectionMode] = useState(false);
+
+  // Состояние для карты "Критический выбор"
+  const [isCriticalChoiceMode, setIsCriticalChoiceMode] = useState(false);
+  const [criticalChoiceCards, setCriticalChoiceCards] = useState([]);
+
+  // Состояние для карты "Картограф"
+  const [nextCardSuit, setNextCardSuit] = useState(null);
 
   useEffect(() => {
     if (isGameActive) {
@@ -127,6 +165,9 @@ const MainGame = observer(() => {
     gameStore.generateNewTarget();
     gameStore.generateSuitMultipliers();
 
+    // Активируем пассивные специальные карты в начале игры
+    gameStore.checkPassiveEffects('gameStart');
+
     if (shuffledPlayerDeck.length < 2 || shuffledDealerDeck.length < 2) {
       setWinner('Not enough cards in the deck to play! Add more cards in Deck Editor.');
       setIsGameActive(false);
@@ -149,24 +190,34 @@ const MainGame = observer(() => {
     setIsPlayerTurn(true);
     setWinner('');
     setIsGameActive(true);
+    
+    // Очищаем состояния специальных карт
+    setIsCardSelectionMode(false);
+    setIsCriticalChoiceMode(false);
+    setCriticalChoiceCards([]);
+    setNextCardSuit(null);
   };
 
   const checkWinner = (finalPlayerScore, finalDealerScore) => {
     const target = gameStore.currentTarget;
 
-    if (gameStore.activeEffects.shield && finalPlayerScore > target) {
-      finalPlayerScore = target;
-      gameStore.activeEffects.shield = false;
-    }
-
     let gameResult = '';
+    let coinReward = 10; // Базовая награда
+    
+    // Проверяем эффект "Двойная ставка"
+    if (gameStore.activeEffects.doubleBet) {
+      coinReward *= 2;
+    }
+    
     if (finalPlayerScore > target) {
       setWinner('Dealer wins!');
       gameResult = 'loss';
       vibrate('error');
     } else if (finalDealerScore > target) {
-      setWinner('Player wins!');
-      gameStore.addCoins(10);
+      setWinner(gameStore.activeEffects.doubleBet ? 
+        `Player wins! +${coinReward} монет (x2 бонус!)` : 
+        'Player wins!');
+      gameStore.addCoins(coinReward);
       gameResult = 'win';
       vibrate('success');
     } else if (finalPlayerScore === finalDealerScore) {
@@ -174,8 +225,10 @@ const MainGame = observer(() => {
       gameResult = 'draw';
       vibrate('light');
     } else if (finalPlayerScore > finalDealerScore) {
-      setWinner('Player wins!');
-      gameStore.addCoins(10);
+      setWinner(gameStore.activeEffects.doubleBet ? 
+        `Player wins! +${coinReward} монет (x2 бонус!)` : 
+        'Player wins!');
+      gameStore.addCoins(coinReward);
       gameResult = 'win';
       vibrate('success');
     } else {
@@ -224,6 +277,52 @@ const MainGame = observer(() => {
       let newPlayerHand = [...playerHand, newCard];
       let newPlayerScore = calculateScore(newPlayerHand, true);
 
+
+      // ЛОГИКА ДВОЙНОГО УДАРА
+      if (gameStore.activeEffects.doubleNext && !newCard.special) {
+        console.log('⚡ Двойной удар активирован! Очки карты удвоены.');
+        
+        // Пересчитываем счет с удвоением последней карты
+        const lastCardBonusScore = calculateCardDoubleBonus(newCard);
+        newPlayerScore += lastCardBonusScore;
+        
+        // Показываем уведомление
+        setWinner(`⚡ Двойной удар! ${newCard.value}${newCard.suit} дает +${lastCardBonusScore} бонусных очков!`);
+        vibrate('success');
+
+        // Убираем уведомление через 3 секунды
+        setTimeout(() => {
+          setWinner('');
+        }, 3000);
+        
+        // Отключаем эффект после использования
+        gameStore.activeEffects.doubleNext = false;
+      }
+
+
+      // ЛОГИКА ЩИТА - проверяем ПОСЛЕ взятия карты
+      if (newPlayerScore > gameStore.currentTarget && gameStore.activeEffects.shield) {
+        console.log('🛡️ Щит сработал! Сбрасываем последнюю карту.');
+        newPlayerHand.pop(); // Убираем последнюю взятую карту
+        newPlayerScore = calculateScore(newPlayerHand, true); // Пересчитываем счет
+        gameStore.activeEffects.shield = false; // Отключаем щит
+        
+        // Показываем уведомление о срабатывании щита
+        setWinner('🛡️ Щит сработал! Последняя карта сброшена. Игра продолжается...');
+        vibrate('success'); // Тактильная обратная связь
+        
+        // Убираем уведомление через 3 секунды
+        setTimeout(() => {
+          setWinner('');
+        }, 3000);
+        
+        // Игра ПРОДОЛЖАЕТСЯ - игрок может взять еще карты
+        setPlayerHand(newPlayerHand);
+        setPlayerScore(newPlayerScore);
+        setIsAnimating(false);
+        return; // Выходим, не проверяя условия завершения
+      }
+
       if (gameStore.activeEffects.extraCard) {
         const extraCard = drawFromPlayerDeck();
         if (extraCard) {
@@ -241,8 +340,17 @@ const MainGame = observer(() => {
       if (newPlayerScore >= gameStore.currentTarget) {
         setIsPlayerTurn(false);
         if (newPlayerScore === gameStore.currentTarget) {
-          setWinner('Perfect! Player wins!');
-          gameStore.addCoins(20);
+          let perfectReward = 20; // Базовая награда за идеальное попадание
+          
+          // Проверяем эффект "Двойная ставка"
+          if (gameStore.activeEffects.doubleBet) {
+            perfectReward *= 2;
+          }
+          
+          setWinner(gameStore.activeEffects.doubleBet ? 
+            `Perfect! Player wins! +${perfectReward} монет (x2 бонус!)` : 
+            'Perfect! Player wins!');
+          gameStore.addCoins(perfectReward);
           setIsGameActive(false);
         }
       }
@@ -270,9 +378,39 @@ const MainGame = observer(() => {
     const target = gameStore.currentTarget;
     let dealerThreshold = target <= 30 ? 17 : Math.floor(target * 0.85);
 
+    // Обычная логика дилера - берет карты до нужного порога
     while (newDealerScore < dealerThreshold && newDealerScore < target && newDealerDeck.length > 0) {
       newDealerHand.push(newDealerDeck.pop());
       newDealerScore = calculateScore(newDealerHand, false);
+    }
+
+    // КАРТА-ЛОВУШКА: принуждает дилера взять еще одну карту после обычной логики
+    if (gameStore.activeEffects.dealerTrap && newDealerDeck.length > 0) {
+      console.log('🪤 Карта-ловушка сработала! Дилер вынужден взять еще одну карту.');
+      
+      // Дилер принудительно берет еще одну карту
+      newDealerHand.push(newDealerDeck.pop());
+      newDealerScore = calculateScore(newDealerHand, false);
+      
+      // Показываем уведомление
+      setWinner('🪤 Карта-ловушка! Дилер вынужден взять дополнительную карту...');
+      vibrate('success');
+      
+      // Отключаем эффект после использования (через MobX action)
+      gameStore.disableDealerTrap();
+      
+      // Обновляем состояние СНАЧАЛА
+      setDealerDeck(newDealerDeck);
+      setDealerHand(newDealerHand);
+      setDealerScore(newDealerScore);
+      
+      // Показываем результат только через 3 секунды
+      setTimeout(() => {
+        setWinner(''); // Убираем уведомление о ловушке
+        checkWinner(playerScore, newDealerScore); // Показываем результат игры
+      }, 3000);
+      
+      return; // Выходим, чтобы не вызывать checkWinner сразу
     }
 
     setDealerDeck(newDealerDeck);
@@ -280,6 +418,212 @@ const MainGame = observer(() => {
     setDealerScore(newDealerScore);
 
     checkWinner(playerScore, newDealerScore);
+  };
+
+
+
+  // Функция для расчета бонуса от двойного удара
+  const calculateCardDoubleBonus = (card) => {
+    let baseValue = 0;
+    
+    if (['J', 'Q', 'K'].includes(card.value)) {
+      baseValue = 10;
+    } else if (card.value === 'A') {
+      // ✅ ИСПРАВЛЕНИЕ: Учитываем эффект "Огненный туз"
+      if (gameStore.activeEffects.fireAce) {
+        baseValue = 12; // Огненный туз = 12 очков
+      } else {
+        baseValue = 11; // Обычный туз = 11 очков
+      }
+    } else {
+      baseValue = parseInt(card.value, 10);
+    }
+
+    // Применяем множитель масти
+    const suitMultiplier = gameStore.getSuitMultiplier(card.suit);
+    const finalCardValue = Math.floor(baseValue * suitMultiplier);
+    
+    // Возвращаем столько же очков как бонус (удваивание)
+    return finalCardValue;
+  };
+
+  // Функция для обмена карты (карта "Обмен удачи")
+  const handleCardSwap = (cardIndex) => {
+    if (!isCardSelectionMode || !isGameActive || currentGamePlayerDeck.length === 0) return;
+
+    const newPlayerHand = [...playerHand];
+    const newPlayerDeck = [...currentGamePlayerDeck];
+    
+    // Получаем карту, которую игрок хочет заменить
+    const cardToSwap = newPlayerHand[cardIndex];
+    
+    // Получаем верхнюю карту из колоды
+    const newCard = newPlayerDeck.pop();
+    
+    if (!newCard) {
+      setWinner('Колода пуста! Обмен невозможен.');
+      setIsCardSelectionMode(false);
+      setTimeout(() => setWinner(''), 2000);
+      return;
+    }
+
+    // Заменяем карту в руке
+    newPlayerHand[cardIndex] = newCard;
+    
+    // Возвращаем старую карту обратно в колоду (в конец)
+    newPlayerDeck.unshift(cardToSwap);
+    
+    // Перемешиваем колоду
+    const shuffledDeck = shuffleDeck(newPlayerDeck);
+    
+    // Обновляем состояние
+    setPlayerHand(newPlayerHand);
+    setCurrentGamePlayerDeck(shuffledDeck);
+    setPlayerScore(calculateScore(newPlayerHand, true));
+    
+    // Показываем уведомление
+    setWinner(`🔄 Обмен удачи! ${cardToSwap.value}${cardToSwap.suit} → ${newCard.value}${newCard.suit}`);
+    vibrate('success');
+    
+    // Убираем уведомление и выходим из режима выбора
+    setTimeout(() => {
+      setWinner('');
+    }, 2500);
+    
+    setIsCardSelectionMode(false);
+    
+    // Отключаем эффект
+    gameStore.disableSwapCard();
+  };
+
+  // Функция для активации режима выбора карты
+  const handleCardSwapActivate = () => {
+    setIsCardSelectionMode(true);
+  };
+
+  // Функция для сброса всех карт и получения двух новых (карта "Сброс напряжения")
+  const handleResetHand = () => {
+    if (currentGamePlayerDeck.length < 2) {
+      setWinner('❌ Недостаточно карт в колоде для сброса!');
+      setTimeout(() => setWinner(''), 2000);
+      return;
+    }
+
+    // Сбрасываем все карты из руки (не возвращаем в колоду - они уходят "в дискард")
+    const newPlayerDeck = [...currentGamePlayerDeck];
+    
+    // Берем две новые карты
+    const newHand = [];
+    newHand.push(newPlayerDeck.pop());
+    newHand.push(newPlayerDeck.pop());
+    
+    // Обновляем состояние
+    setPlayerHand(newHand);
+    setCurrentGamePlayerDeck(newPlayerDeck);
+    setPlayerScore(calculateScore(newHand, true));
+    
+    // Показываем уведомление
+    setWinner(`💥 Сброс напряжения! Новая рука получена!`);
+    vibrate('success');
+    
+    // Убираем уведомление
+    setTimeout(() => {
+      setWinner('');
+    }, 2500);
+  };
+
+  // Функция для активации критического выбора (карта "Критический выбор")
+  const handleCriticalChoiceActivate = () => {
+    if (currentGamePlayerDeck.length < 3) {
+      setWinner('❌ Недостаточно карт для критического выбора!');
+      setTimeout(() => setWinner(''), 2000);
+      return;
+    }
+
+    // Берем 3 верхние карты из колоды (не удаляя их пока)
+    const topCards = currentGamePlayerDeck.slice(-3);
+    setCriticalChoiceCards(topCards);
+    setIsCriticalChoiceMode(true);
+    
+    setWinner('🔍 Критический выбор: выберите одну из трех карт!');
+    
+  };
+
+  // Функция для выбора карты в критическом выборе
+  const handleCriticalCardChoice = (chosenCardIndex) => {
+    const chosenCard = criticalChoiceCards[chosenCardIndex];
+    const newPlayerDeck = [...currentGamePlayerDeck];
+    
+    // Удаляем все 3 карты из колоды
+    newPlayerDeck.splice(-3, 3);
+    
+    // Добавляем выбранную карту в руку
+    const newPlayerHand = [...playerHand, chosenCard];
+    const newPlayerScore = calculateScore(newPlayerHand, true);
+    
+    // Обновляем состояние
+    setPlayerHand(newPlayerHand);
+    setCurrentGamePlayerDeck(newPlayerDeck);
+    setPlayerScore(newPlayerScore);
+    
+    // Сбрасываем состояние критического выбора
+    setIsCriticalChoiceMode(false);
+    setCriticalChoiceCards([]);
+
+    setWinner('');
+    
+    // Проверяем на перебор или победу
+    setTimeout(() => {
+      // Проверяем на перебор или победу
+      if (newPlayerScore > gameStore.currentTarget) {
+        // Проверяем, активен ли щит перегруза
+        if (gameStore.activeEffects.shield) {
+          gameStore.disableShield(); // Отключаем щит
+          setWinner(`🛡️ Щит перегруза сработал! Перебор предотвращён (${newPlayerScore})`);
+          vibrate('success');
+          setTimeout(() => {
+            setWinner('');
+          }, 2500);
+        } else {
+          // Обычный перебор
+          setIsGameActive(false);
+          setIsPlayerTurn(false);
+          checkWinner(newPlayerScore, dealerScore);
+          return;
+        }
+      } else {
+        // Показываем уведомление о выборе карты
+        setWinner(`🔍 Критический выбор! Получена: ${chosenCard.value}${chosenCard.suit}`);
+        vibrate('success');
+        
+        // Убираем уведомление через 3 секунды
+        setTimeout(() => {
+          setWinner('');
+        }, 3000);
+      }
+    }, 100); // Небольшая задержка для корректного обновления
+  };
+
+  // ✅ Функция для активации картографа (карта "Картограф")
+  const handleCartographerActivate = () => {
+    if (currentGamePlayerDeck.length === 0) {
+      setWinner('❌ В колоде нет карт!');
+      setTimeout(() => setWinner(''), 2000);
+      return;
+    }
+
+    // Получаем следующую карту (последнюю в массиве)
+    const nextCard = currentGamePlayerDeck[currentGamePlayerDeck.length - 1];
+    setNextCardSuit(nextCard.suit);
+    
+    setWinner(`🗺️ Картограф: следующая карта масти ${nextCard.suit}`);
+    vibrate('success');
+    
+    // Убираем информацию через 5 секунд
+    setTimeout(() => {
+      setWinner('');
+      setNextCardSuit(null);
+    }, 5000);
   };
 
   return (
@@ -296,6 +640,11 @@ const MainGame = observer(() => {
       <div className="game-info">
         <div className="game-target">
           <h3>Target Score: {gameStore.currentTarget}</h3>
+          {gameStore.activeEffects.doubleBet && (
+            <div className="double-bet-indicator">
+              💰 Двойная ставка активна! x2 награда за победу!
+            </div>
+          )}
         </div>
         <div className="suit-multipliers">
           <h4>Suit Multipliers:</h4>
@@ -327,6 +676,31 @@ const MainGame = observer(() => {
         showFirstCard={isPlayerTurn && !gameStore.activeEffects.revealDealerCard}
       />
 
+      {/* Панель критического выбора */}
+      {isCriticalChoiceMode && (
+        <div className="critical-choice-panel">
+          <h3>🔍 Критический выбор - выберите одну карту:</h3>
+          <div className="critical-choice-cards">
+            {criticalChoiceCards.map((card, index) => {
+              const isRed = card.suit === '♥' || card.suit === '♦';
+              return (
+                <div 
+                  key={index}
+                  className={`card critical-choice-card ${isRed ? 'red-card' : ''}`}
+                  onClick={() => handleCriticalCardChoice(index)}
+                >
+                  <div className="card-value">{card.value}</div>
+                  <div className="card-suit">{card.suit}</div>
+                  <div className="choice-indicator">
+                    Выбрать
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="game-area">
         {/* СТОПКА КАРТ — клик открывает модалку */}
         <div
@@ -340,6 +714,11 @@ const MainGame = observer(() => {
           style={{ cursor: 'pointer' }}
         >
           <div className="card back-card">?</div>
+          {nextCardSuit && (
+            <div className="next-card-suit-indicator">
+              🗺️ {nextCardSuit}
+            </div>
+          )}
         </div>
 
         {winner && (
@@ -356,17 +735,29 @@ const MainGame = observer(() => {
             )}
           </div>
         )}
-        <Player hand={playerHand} score={playerScore} />
+        <Player 
+          hand={playerHand} 
+          score={playerScore} 
+          isCardSelectionMode={isCardSelectionMode}
+          onCardSwap={handleCardSwap}
+        />
       </div>
 
       {/* Панель специальных карт */}
-      <SpecialCardsPanel store={gameStore} />
+      <SpecialCardsPanel 
+        store={gameStore} 
+        onCardSwapActivate={handleCardSwapActivate}
+        onResetHand={handleResetHand}
+        onCriticalChoiceActivate={handleCriticalChoiceActivate}
+        onCartographerActivate={handleCartographerActivate}
+        isBlocked={isCriticalChoiceMode}
+      />
 
       <Controls
         onHit={handleHit}
         onStand={handleStand}
         onNewGame={startNewGame}
-        isGameActive={isGameActive && isPlayerTurn}
+        isGameActive={isGameActive && isPlayerTurn && !isCriticalChoiceMode}
       />
     </div>
   );

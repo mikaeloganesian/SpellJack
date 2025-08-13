@@ -1,3 +1,7 @@
+import React from 'react';
+import { observer } from 'mobx-react-lite';
+import { gameStore } from '../Store';
+
 const Card = ({ card, isFaceDown = false }) => {
   if (isFaceDown) {
     return <div className="card back-card">?</div>;
@@ -13,7 +17,7 @@ const Card = ({ card, isFaceDown = false }) => {
   );
 };
 
-const Dealer = ({ hand, score, showFirstCard }) => {
+const Dealer = observer(({ hand, score, showFirstCard }) => {
   const displayScore = showFirstCard ? '?' : score;
   
   const getHandContainerClass = () => {
@@ -24,8 +28,13 @@ const Dealer = ({ hand, score, showFirstCard }) => {
   };
 
   return (
-    <div className="dealer-container">
-      <h2>Dealer ({displayScore})</h2>
+    <div className={`dealer-container ${gameStore.activeEffects.dealerTrap ? 'trap-active' : ''}`}>
+      <h2>
+        Dealer ({displayScore})
+        {gameStore.activeEffects.dealerTrap && (
+          <span className="trap-indicator">🪤</span>
+        )}
+      </h2>
       <div className={getHandContainerClass()}>
         {hand.map((card, index) => (
           <Card key={index} card={card} isFaceDown={showFirstCard && index === 0} />
@@ -33,6 +42,6 @@ const Dealer = ({ hand, score, showFirstCard }) => {
       </div>
     </div>
   );
-};
+});
 
 export default Dealer;

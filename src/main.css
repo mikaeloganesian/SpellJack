@@ -177,6 +177,29 @@ body {
   display: inline-block;
 }
 
+.double-bet-indicator {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background: linear-gradient(145deg, #f1c40f, #d4ac0d);
+  border: 2px solid #f39c12;
+  border-radius: 8px;
+  color: #2c3e50;
+  font-weight: bold;
+  font-size: 0.9em;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 8px rgba(241, 196, 15, 0.3);
+  animation: doubleBetGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes doubleBetGlow {
+  from {
+    box-shadow: 0 4px 8px rgba(241, 196, 15, 0.3);
+  }
+  to {
+    box-shadow: 0 6px 16px rgba(241, 196, 15, 0.6);
+  }
+}
+
 .game-info {
   display: flex;
   justify-content: center;
@@ -289,6 +312,32 @@ body {
   margin-bottom: 20px;
 }
 
+.dealer-container.trap-active {
+  border: 2px solid #e74c3c;
+  border-radius: 8px;
+  padding: 10px;
+  background: linear-gradient(145deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.1));
+  box-shadow: 0 0 15px rgba(231, 76, 60, 0.3);
+  animation: trapGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes trapGlow {
+  0% { box-shadow: 0 0 15px rgba(231, 76, 60, 0.3); }
+  100% { box-shadow: 0 0 25px rgba(231, 76, 60, 0.6); }
+}
+
+.trap-indicator {
+  display: inline-block;
+  margin-left: 10px;
+  font-size: 1.2em;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
 .player-container .hand-container {
   margin-top: 15px;
 }
@@ -390,6 +439,11 @@ body {
   gap: 20px;
 }
 
+.control-button-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
 .control-button,
 .new-game-button {
   padding: 12px 24px;
@@ -402,6 +456,35 @@ body {
   font-weight: bold;
   transition: background-color 0.3s ease, transform 0.1s ease;
   box-shadow: 0 4px #f39c12;
+  position: relative;
+}
+
+.control-button.double-next-ready {
+  border-color: #9b59b6 !important;
+  box-shadow: 0 4px #8e44ad, 0 0 15px rgba(155, 89, 182, 0.6) !important;
+  animation: doubleNextButtonGlow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes doubleNextButtonGlow {
+  0% { box-shadow: 0 4px #8e44ad, 0 0 15px rgba(155, 89, 182, 0.6); }
+  100% { box-shadow: 0 4px #8e44ad, 0 0 25px rgba(155, 89, 182, 1); }
+}
+
+.double-next-badge {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  background-color: #9b59b6;
+  color: #fff;
+  font-size: 0.8em;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  z-index: 1;
+  min-width: 45px;
+  text-align: center;
+  animation: pulse 1s ease-in-out infinite;
 }
 
 .control-button:hover,
@@ -462,6 +545,30 @@ body {
 
 .deck-stack .card {
   transform: rotate(90deg);
+}
+
+.next-card-suit-indicator {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  background: linear-gradient(145deg, #17a2b8, #138496);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 0.9em;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.4);
+  animation: suitIndicatorFloat 2s ease-in-out infinite;
+  z-index: 20;
+}
+
+@keyframes suitIndicatorFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 .animate-deal {
@@ -719,7 +826,7 @@ p {
 
 .deck-card .card {
   margin: 0;
-  transform: none !important;
+  /*transform: none !important;*/
   animation: none !important;
 }
 
@@ -756,6 +863,31 @@ p {
   color: #95a5a6;
   font-style: italic;
   font-size: 1.1em;
+}
+
+/* --- Стили для специальных карт в DeckEditor --- */
+.card.special-card {
+  background: linear-gradient(145deg, #3c5470, #2c3e50);
+  border: 2px solid #f39c12;
+  color: #ecf0f1;
+}
+
+.card.special-card:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 6px 16px rgba(243, 156, 18, 0.4), 4px 4px 8px rgba(0, 0, 0, 0.5);
+  border-color: #f1c40f;
+}
+
+.card.special-card .card-value {
+  font-size: 1.8em; /* Увеличиваем размер эмодзи */
+}
+
+.card.special-card .card-suit {
+  font-size: 0.5em; /* Уменьшаем размер названия */
+  font-weight: bold;
+  text-align: center;
+  line-height: 1.1;
+  margin-top: 4px;
 }
 
 /* Адаптивность для большого количества карт */
@@ -1013,52 +1145,226 @@ p {
   opacity: 0.8;
 }
 
-/* Редактор колоды - специальные карты */
-.special-deck-section,
-.special-collection-section {
-  margin: 24px 0;
-  padding: 16px;
-  background: linear-gradient(135deg, #2c3e50, #34495e);
-  border: 2px solid #f1c40f;
-  border-radius: 12px;
+.special-card-item.active-effect {
+  border-color: #9b59b6 !important;
+  background: linear-gradient(145deg, #5c4070, #4a3456);
+  box-shadow: 0 6px 16px rgba(155, 89, 182, 0.6);
 }
 
-.special-deck-section h3,
-.special-collection-section h3 {
-  color: #f1c40f;
-  margin: 0 0 16px 0;
-  text-align: center;
+.special-card-item.active-effect.trap-effect {
+  border-color: #e74c3c !important;
+  background: linear-gradient(145deg, #7c3626, #5d2b20);
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.6);
 }
 
-.special-deck-cards,
-.special-collection-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
+.special-card-item.active-effect.swap-effect {
+  border-color: #3498db !important;
+  background: linear-gradient(145deg, #2671a6, #1e5a8a);
+  box-shadow: 0 6px 16px rgba(52, 152, 219, 0.6);
 }
 
-.deck-card.special {
-  background: linear-gradient(145deg, #3c5470, #2c3e50);
-  border: 2px solid #f39c12;
-  padding: 16px;
-  border-radius: 12px;
-  transition: all 0.3s ease;
+.special-card-item.active-effect .activation-hint {
+  color: #e74c3c;
+  font-weight: bold;
 }
 
-.deck-card.special:hover {
-  transform: translateY(-2px);
+.special-card-item.active-effect.trap-effect .activation-hint {
+  color: #f39c12;
+  font-weight: bold;
+}
+
+.special-card-item.active-effect.swap-effect .activation-hint {
+  color: #3498db;
+  font-weight: bold;
+}
+
+/* Стили для карты "Сброс напряжения" */
+.special-card-item.reset-hand-effect {
+  border-color: #e67e22 !important;
+  background: linear-gradient(145deg, #d35400, #a0471b);
+  box-shadow: 0 6px 16px rgba(230, 126, 34, 0.6);
+  animation: resetHandPulse 2s ease-in-out infinite;
+}
+
+.special-card-item.reset-hand-effect:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(230, 126, 34, 0.8);
+}
+
+.special-card-item.reset-hand-effect .activation-hint {
+  color: #f39c12;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(243, 156, 18, 0.6);
+}
+
+@keyframes resetHandPulse {
+  0%, 100% {
+    box-shadow: 0 6px 16px rgba(230, 126, 34, 0.6);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(230, 126, 34, 0.9);
+  }
+}
+
+/* Стили для карты "Критический выбор" */
+.special-card-item.critical-choice-effect {
+  border-color: #9b59b6 !important;
+  background: linear-gradient(145deg, #8e44ad, #6c3483);
+  box-shadow: 0 6px 16px rgba(155, 89, 182, 0.6);
+  animation: criticalChoicePulse 2s ease-in-out infinite;
+}
+
+.special-card-item.critical-choice-effect:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(155, 89, 182, 0.8);
+}
+
+.special-card-item.critical-choice-effect .activation-hint {
+  color: #e8daef;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(155, 89, 182, 0.6);
+}
+
+@keyframes criticalChoicePulse {
+  0%, 100% {
+    box-shadow: 0 6px 16px rgba(155, 89, 182, 0.6);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(155, 89, 182, 0.9);
+  }
+}
+
+/* Стили для карты "Картограф" */
+.special-card-item.cartographer-effect {
+  border-color: #17a2b8 !important;
+  background: linear-gradient(145deg, #138496, #0e6674);
+  box-shadow: 0 6px 16px rgba(23, 162, 184, 0.6);
+  animation: cartographerGlow 3s ease-in-out infinite;
+}
+
+.special-card-item.cartographer-effect:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(23, 162, 184, 0.8);
+}
+
+.special-card-item.cartographer-effect .activation-hint {
+  color: #d1ecf1;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(23, 162, 184, 0.6);
+}
+
+@keyframes cartographerGlow {
+  0%, 100% {
+    box-shadow: 0 6px 16px rgba(23, 162, 184, 0.6);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(23, 162, 184, 0.9);
+  }
+}
+
+/* Стили для пассивных эффектов */
+.special-card-item.passive-effect {
+  border-color: #27ae60 !important;
+  background: linear-gradient(145deg, #2c5f3f, #1e4030);
+  box-shadow: 0 6px 16px rgba(39, 174, 96, 0.4);
+  cursor: default;
+}
+
+.special-card-item.passive-effect:hover {
+  transform: none;
+  box-shadow: 0 6px 16px rgba(39, 174, 96, 0.6);
+}
+
+.special-card-item.passive-effect .activation-hint {
+  color: #27ae60;
+  font-weight: bold;
+}
+
+/* Специфичные стили для разных пассивных эффектов */
+.special-card-item.passive-effect.ace-armor-effect {
+  border-color: #f39c12 !important;
+  background: linear-gradient(145deg, #7c5f26, #5d4820);
   box-shadow: 0 6px 16px rgba(243, 156, 18, 0.4);
 }
 
-.special-card-display {
-  text-align: center;
-  margin-bottom: 12px;
+.special-card-item.passive-effect.ace-armor-effect .activation-hint {
+  color: #f39c12;
 }
 
-.special-card-display .card-emoji {
-  font-size: 32px;
+.special-card-item.passive-effect.shield-effect {
+  border-color: #3498db !important;
+  background: linear-gradient(145deg, #2671a6, #1e5a8a);
+  box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
+}
+
+.special-card-item.passive-effect.fire-effect {
+  border-color: #e74c3c !important;
+  background: linear-gradient(145deg, #7c3626, #5d2b20);
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
+}
+
+.special-card-item.passive-effect.gold-effect {
+  border-color: #f1c40f !important;
+  background: linear-gradient(145deg, #b8941f, #9c7a1a);
+  box-shadow: 0 6px 16px rgba(241, 196, 15, 0.4);
+}
+
+.special-card-item.passive-effect.lucky-effect {
+  border-color: #2ecc71 !important;
+  background: linear-gradient(145deg, #239954, #1e7e45);
+  box-shadow: 0 6px 16px rgba(46, 204, 113, 0.4);
+}
+
+.special-card-item.passive-effect.royal-effect {
+  border-color: #9b59b6 !important;
+  background: linear-gradient(145deg, #6f4085, #5c3570);
+  box-shadow: 0 6px 16px rgba(155, 89, 182, 0.4);
+}
+
+/* Стили для специальных карт в магазине */
+.special-card-shop {
+  width: 120px;
+  height: 160px;
+  background: linear-gradient(145deg, #3c5470, #2c3e50);
+  border: 2px solid #f39c12;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.special-card-shop:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(243, 156, 18, 0.4);
+  border-color: #f1c40f;
+}
+
+.special-card-shop .card-emoji {
+  font-size: 36px;
   margin-bottom: 8px;
-  display: block;
+}
+
+.special-card-shop .card-name {
+  color: #ecf0f1;
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.special-card-shop .activation-type {
+  color: #f39c12;
+  font-size: 10px;
+  text-transform: uppercase;
+  padding: 2px 4px;
+  background: rgba(243, 156, 18, 0.2);
+  border-radius: 4px;
+  display: inline-block;
 }
 
 .special-card-display .card-name {
@@ -1076,10 +1382,10 @@ p {
   background: rgba(243, 156, 18, 0.2);
   border-radius: 4px;
   display: inline-block;
-}
+}*/
 
 /* Кнопки для специальных карт */
-.deck-card.special .add-card-button,
+deck-card.special .add-card-button,
 .deck-card.special .remove-card-button {
   width: 100%;
   margin-top: 8px;
@@ -1111,6 +1417,7 @@ p {
   background: #c0392b;
   transform: translateY(-1px);
 }
+
 
 /* Пустые слоты */
 .special-card-slot {
@@ -1249,7 +1556,7 @@ p {
 .modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 20px 20px 0 20px;
   border-bottom: 2px solid var(--color-border);
   margin-bottom: 20px;
@@ -1260,6 +1567,7 @@ p {
   color: var(--color-text);
   font-family: 'MedievalSharp', cursive;
   font-size: 1.3em;
+  margin-bottom: 15px;
 }
 
 .modal-close {
@@ -1275,6 +1583,7 @@ p {
   justify-content: center;
   font-size: 18px;
   transition: all 0.2s;
+  
 }
 
 .modal-close:hover {
@@ -1521,4 +1830,297 @@ p {
 .buy-section button.disabled:hover {
   background: var(--color-disabled);
   transform: none;
+}
+
+
+/*Стили для карт с эффектном Двойной удар */
+.double-next-card {
+  border-color: #9b59b6 !important;
+  box-shadow: 0 0 15px rgba(155, 89, 182, 0.6), 4px 4px 8px rgba(0, 0, 0, 0.5) !important;
+  position: relative;
+}
+
+.double-next-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #9b59b6, #8e44ad, #9b59b6);
+  border-radius: inherit;
+  z-index: -1;
+  animation: doubleNextGlow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes doubleNextGlow {
+  0% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.double-next-indicator {
+  position: absolute;
+  top: -18px;
+  left: -8px;
+  background-color: #9b59b6;
+  color: #fff;
+  font-size: 0.7em;
+  font-weight: bold;
+  padding: 2px 4px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 1;
+  min-width: 35px;
+  text-align: center;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Стили для карты "Обмен удачи" */
+.selectable-card {
+  border-color: #3498db !important;
+  box-shadow: 0 0 15px rgba(52, 152, 219, 0.6), 4px 4px 8px rgba(0, 0, 0, 0.5) !important;
+  transform: translateY(-5px);
+  transition: all 0.3s ease;
+}
+
+.selectable-card:hover {
+  border-color: #2980b9 !important;
+  box-shadow: 0 0 20px rgba(41, 128, 185, 0.8), 4px 4px 12px rgba(0, 0, 0, 0.6) !important;
+  transform: translateY(-8px);
+}
+
+.swap-indicator {
+  position: absolute;
+  top: -18px;
+  right: -8px;
+  background-color: #3498db;
+  color: #fff;
+  font-size: 0.8em;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  z-index: 1;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+.selection-hint {
+  color: #3498db;
+  font-size: 0.9em;
+  font-weight: normal;
+}
+
+/* Индикатор Тузовой брони */
+.ace-armor-indicator {
+  color: #f39c12;
+  font-size: 0.9em;
+  font-weight: normal;
+  text-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
+  animation: aceArmorGlow 2s ease-in-out infinite alternate;
+}
+
+/* Индикатор Огненного туза */
+.fire-ace-indicator {
+  color: #e74c3c;
+  font-size: 0.9em;
+  font-weight: normal;
+  text-shadow: 0 0 15px rgba(231, 76, 60, 0.8);
+  animation: fireAceGlow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes aceArmorGlow {
+  from {
+    text-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
+  }
+  to {
+    text-shadow: 0 0 20px rgba(243, 156, 18, 0.8);
+  }
+}
+
+@keyframes fireAceGlow {
+  from {
+    text-shadow: 0 0 15px rgba(231, 76, 60, 0.8);
+  }
+  to {
+    text-shadow: 0 0 25px rgba(231, 76, 60, 1.0), 0 0 35px rgba(255, 165, 0, 0.6);
+  }
+}
+
+/* Стили для карт с Тузовой броней */
+.ace-armor-card {
+  border: 2px solid #f39c12;
+  box-shadow: 0 0 15px rgba(243, 156, 18, 0.4);
+  animation: aceArmorCardGlow 2s ease-in-out infinite alternate;
+}
+
+/* Стили для карт с Огненным тузом */
+.fire-ace-card {
+  border: 2px solid #e74c3c;
+  box-shadow: 0 0 20px rgba(231, 76, 60, 0.5);
+  animation: fireAceCardGlow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes aceArmorCardGlow {
+  from {
+    box-shadow: 0 0 15px rgba(243, 156, 18, 0.4);
+  }
+  to {
+    box-shadow: 0 0 25px rgba(243, 156, 18, 0.6);
+  }
+}
+
+@keyframes fireAceCardGlow {
+  from {
+    box-shadow: 0 0 20px rgba(231, 76, 60, 0.5);
+  }
+  to {
+    box-shadow: 0 0 30px rgba(231, 76, 60, 0.8), 0 0 40px rgba(255, 165, 0, 0.4);
+  }
+}
+
+.ace-armor-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: rgba(243, 156, 18, 0.9);
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7em;
+  border: 2px solid #f39c12;
+}
+
+.fire-ace-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: rgba(231, 76, 60, 0.9);
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7em;
+  border: 2px solid #e74c3c;
+  animation: fireAceBadgeGlow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes fireAceBadgeGlow {
+  from {
+    background: rgba(231, 76, 60, 0.9);
+    border-color: #e74c3c;
+  }
+  to {
+    background: rgba(255, 99, 71, 1.0);
+    border-color: #ff6347;
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.8);
+  }
+}
+
+/* Панель критического выбора */
+.critical-choice-panel {
+  background: linear-gradient(135deg, #8e44ad, #9b59b6);
+  border: 3px solid #e8daef;
+  border-radius: 15px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 8px 25px rgba(155, 89, 182, 0.4);
+  animation: criticalChoiceAppear 0.5s ease-out;
+}
+
+.critical-choice-panel h3 {
+  color: #e8daef;
+  text-align: center;
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.critical-choice-cards {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.critical-choice-card {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 3px solid #e8daef;
+  animation: criticalCardFloat 2s ease-in-out infinite;
+}
+
+.critical-choice-card:hover {
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 15px 30px rgba(155, 89, 182, 0.6);
+  border-color: #f4ecff;
+}
+
+.critical-choice-card:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.critical-choice-card:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+.critical-choice-card:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+.choice-indicator {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(155, 89, 182, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: bold;
+  border: 2px solid #e8daef;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.critical-choice-card:hover .choice-indicator {
+  opacity: 1;
+}
+
+@keyframes criticalChoiceAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes criticalCardFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }

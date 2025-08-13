@@ -70,7 +70,7 @@ const Shop = observer(() => {
                   disabled={!canAffordCard(card)}
                   className={!canAffordCard(card) ? 'disabled' : ''}
                 >
-                  {canAffordCard(card) ? 'Buy' : 'Need more'}
+                  {'Buy'}
                 </button>
               </div>
             </div>

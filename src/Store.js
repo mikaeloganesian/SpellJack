@@ -57,21 +57,64 @@ class GameStore {
   usedSpecialEffects = [];                   // Использованные эффекты в партии
   
   activeEffects = {
-    // Старые эффекты
-    shield: false,
+    // === 21 эффект из специальных карт ===
+
+    // 1. Открытый взгляд
     revealDealerCard: false,
-    extraCard: false,
-    
-    // Новые эффекты
+
+    // 2. Щит перегруза
+    shield: false,
+
+    // 3. Двойной удар
     doubleNext: false,
+
+    // 4. Карта-ловушка
+    dealerTrap: false,
+
+    // 5. Обмен удачи
+    swapCard: false,
+
+    // 6. Тузовая броня
     aceArmor: false,
-    fireAce: false,
+
+    // 7. Сброс напряжения (обрабатывается в игровой логике)
+
+    // 8. Критический выбор (обрабатывается в игровой логике)
+
+    // 9. Двойная ставка
     doubleBet: false,
+
+
+    // 10. Картограф (обрабатывается в игровой логике)
+
+    // 11. Огненный туз
+    fireAce: false,
+
+    // 12. Счастливая семёрка
     luckySeven: false,
-    royalDecree: false,
+
+    // 13. Хамелеон (обрабатывается в игровой логике)
+
+    // 14. Масть удачи (изменяет suitMultipliers напрямую)
+
+    // 15. Карта предвидения (обрабатывается в игровой логике)
+
+    // 16. Ледяное сердце
     dealerFrozen: false,
+
+    // 17. Золотое касание
     goldenTouch: false,
-    suitMagnetActive: null, // какая масть получает бонус
+
+    // 18. Временная петля (обрабатывается в игровой логике)
+
+    // 19. Магнит мастей 
+    suitMagnetActive: null, // Активная масть для магнитного эффекта
+
+    // 20. Карта судьбы (обрабатывается в игровой логике
+
+    // 21. Королевский указ
+    royalDecree: false,
+
   };
 
   constructor() {
@@ -94,10 +137,11 @@ class GameStore {
       removeSpecialCardFromDeck: action,
       activateSpecialCard: action,
       resetGameEffects: action,
+      disableDealerTrap: action,
+      disableSwapCard: action,
+      disableShield: action,
       applyAutoEffects: action,
       checkPassiveEffects: action,
-      removeDealerCardEffect: action,
-      addExtraCardEffect: action,
       generateNewTarget: action,
       generateSuitMultipliers: action,
     });
@@ -121,7 +165,8 @@ class GameStore {
   }
 
 
-  buyCard(card) {
+  // Метод покупки карты в разделе Shop
+  buyCard(card) { 
     if (this.coins >= card.cost) {
       this.coins -= card.cost;
       this.playerOwnedCards.push(card);
@@ -159,94 +204,98 @@ class GameStore {
 
   applyCardEffect(effectName) {
     switch (effectName) {
-      // Старые эффекты
-      case 'addCoins':
-        this.addCoins(10);
-        break;
-      case 'shield':
-        this.activeEffects.shield = true;
-        break;
+      // === 21 карта из базы специальных карт ===
+      
       case 'revealDealerCard':
         this.activeEffects.revealDealerCard = true;
         break;
-      case 'removeDealerCard':
-        this.activeEffects.removeDealerCard = true;
-        break;
-      case 'extraCard':
-        this.activeEffects.extraCard = true;
+      
+      case 'shield':
+        this.activeEffects.shield = true;
         break;
       
-      // Новые эффекты
       case 'doubleNext':
         this.activeEffects.doubleNext = true;
         break;
+      
+      case 'dealerTrap':
+        this.activeEffects.dealerTrap = true;
+        break;
+      
+      case 'swapCard':
+        this.activeEffects.swapCard = true;
+        break;
+      
       case 'aceArmor':
         this.activeEffects.aceArmor = true;
         break;
-      case 'fireAce':
-        this.activeEffects.fireAce = true;
+      
+      case 'resetHand':
+        console.log('Reset hand activated');
         break;
+      
+      case 'criticalChoice':
+        console.log('Critical choice activated');
+        break;
+      
       case 'doubleBet':
         this.activeEffects.doubleBet = true;
         break;
+      
+      case 'showNextSuit':
+        console.log('Show next suit activated');
+        break;
+      
+      case 'fireAce':
+        this.activeEffects.fireAce = true;
+        break;
+      
       case 'luckySeven':
         this.activeEffects.luckySeven = true;
         break;
-      case 'royalDecree':
-        this.activeEffects.royalDecree = true;
+      
+      case 'chameleon':
+        console.log('Chameleon activated');
         break;
-      case 'dealerFrozen':
+      
+      case 'luckySuit':
+        const suits = ['♠', '♥', '♦', '♣'];
+        const randomSuit = suits[Math.floor(Math.random() * suits.length)];
+        const currentMultiplier = this.getSuitMultiplier(randomSuit);
+        this.suitMultipliers[randomSuit] = Math.min(currentMultiplier * 2, 4.0);
+        console.log(`Lucky suit activated: ${randomSuit} multiplier doubled to ${this.suitMultipliers[randomSuit]}`);
+        break;
+      
+      case 'foresight':
+        console.log('Foresight activated');
+        break;
+      
+      case 'freezeDealer':
         this.activeEffects.dealerFrozen = true;
         break;
+      
       case 'goldenTouch':
         this.activeEffects.goldenTouch = true;
         break;
+      
+      case 'timeLoop':
+        console.log('Time loop activated');
+        break;
+      
       case 'suitMagnet':
-        // Требует дополнительной логики для выбора масти
-        this.activeEffects.suitMagnetActive = '♠'; // По умолчанию пики
+        console.log('Suit magnet activated');
         break;
-      case 'chooseFromThree':
-        // Эффект будет обработан в игровой логике
-        console.log('Choose from three cards activated');
+      
+      case 'destiny':
+        console.log('Destiny card activated');
         break;
-      case 'swapDealerCard':
-        // Эффект будет обработан в игровой логике
-        console.log('Swap with dealer card activated');
+      
+      case 'royalDecree':
+        this.activeEffects.royalDecree = true;
         break;
-      case 'perfectVision':
-        // Эффект будет обработан в игровой логике
-        console.log('Perfect vision activated');
-        break;
-      case 'timeRewind':
-        // Эффект будет обработан в игровой логике
-        console.log('Time rewind activated');
-        break;
-      case 'invisibleCard':
-        // Эффект будет обработан в игровой логике
-        console.log('Invisible card activated');
-        break;
-      case 'dealerMirror':
-        // Эффект будет обработан в игровой логике
-        console.log('Dealer mirror activated');
-        break;
-      case 'fortuneWheel':
-        // Случайный эффект
-        const randomEffects = ['doubleNext', 'aceArmor', 'fireAce', 'extraCard'];
-        const randomEffect = randomEffects[Math.floor(Math.random() * randomEffects.length)];
-        this.applyCardEffect(randomEffect);
-        break;
-      case 'lastChance':
-        // Эффект будет обработан в игровой логике при проигрыше
-        console.log('Last chance activated');
-        break;
-      case 'shadowClone':
-        // Эффект будет обработан в игровой логике
-        console.log('Shadow clone activated');
-        break;
-      case 'ultimatePower':
-        // Комбо эффект
-        this.activeEffects.doubleNext = true;
-        this.activeEffects.aceArmor = true;
+      
+      // Старые эффекты для совместимости
+      case 'extraCard':
         this.activeEffects.extraCard = true;
         break;
       
@@ -259,19 +308,37 @@ class GameStore {
   resetGameEffects() {
     this.usedSpecialEffects = [];
     this.activeEffects = {
-      shield: false,
+      // Основные игровые эффекты
       revealDealerCard: false,
-      extraCard: false,
+      shield: false,
       doubleNext: false,
+      swapCard: false,
+      dealerTrap: false,
       aceArmor: false,
-      fireAce: false,
       doubleBet: false,
+      fireAce: false,
       luckySeven: false,
-      royalDecree: false,
       dealerFrozen: false,
       goldenTouch: false,
+      royalDecree: false,
       suitMagnetActive: null,
+      extraCard: false,
     };
+  }
+
+  // Метод для отключения ловушки (MobX action)
+  disableDealerTrap() {
+    this.activeEffects.dealerTrap = false;
+  }
+
+  // Метод для отключения обмена карты (MobX action)
+  disableSwapCard() {
+    this.activeEffects.swapCard = false;
+  }
+
+  // Метод для отключения щита перегруза (MobX action)
+  disableShield() {
+    this.activeEffects.shield = false;
   }
 
   // Получить карты доступные для ручной активации
@@ -302,17 +369,39 @@ class GameStore {
   }
 
   checkPassiveCondition(card, context) {
-    // Здесь будет логика проверки условий для пассивных карт
-    // context содержит информацию о текущем состоянии игры
-    console.log(`Checking passive condition for ${card.id}`, context);
-  }
-
-  removeDealerCardEffect() {
-    this.activeEffects.removeDealerCard = false;
-  }
-
-  addExtraCardEffect() {
-    this.activeEffects.extraCard = false;
+    switch(card.effect) {
+      case 'shield':
+        if (context === 'gameStart') {
+          console.log('🛡️ Щит активирован автоматически');
+          this.activeEffects.shield = true;
+        }
+        break;
+      case 'aceArmor':
+        if (context === 'gameStart') {
+          this.activeEffects.aceArmor = true;
+        }
+        break;
+      case 'fireAce':
+        if (context === 'gameStart') {
+          this.activeEffects.fireAce = true;
+        }
+        break;
+      case 'doubleBet':
+        if (context === 'gameStart') {
+          this.activeEffects.doubleBet = true;
+        }
+        break;
+      case 'luckySeven':
+        if (context === 'gameStart') {
+          this.activeEffects.luckySeven = true;
+        }
+        break;
+      case 'royalDecree':
+        if (context === 'gameStart') {
+          this.activeEffects.royalDecree = true;
+        }
+        break;
+    }
   }
 
   generateNewTarget() {

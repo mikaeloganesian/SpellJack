@@ -1,9 +1,22 @@
-const Controls = ({ onHit, onStand, onNewGame, isGameActive }) => {
+import { observer } from 'mobx-react-lite';
+import { gameStore } from '../Store';
+
+const Controls = observer(({ onHit, onStand, onNewGame, isGameActive }) => {
   return (
     <div className="controls-container">
       {isGameActive ? (
         <>
-          <button className="control-button" onClick={onHit}>Get Card</button>
+          <div className="control-button-wrapper">
+            <button 
+              className={`control-button ${gameStore.activeEffects.doubleNext ? 'double-next-ready' : ''}`} 
+              onClick={onHit}
+            >
+              Get Card
+              {gameStore.activeEffects.doubleNext && (
+                <div className="double-next-badge">⚡ x2!</div>
+              )}
+            </button>
+          </div>
           <button className="control-button" onClick={onStand}>Enought</button>
         </>
       ) : (
@@ -11,6 +24,6 @@ const Controls = ({ onHit, onStand, onNewGame, isGameActive }) => {
       )}
     </div>
   );
-};
+});
 
 export default Controls;
