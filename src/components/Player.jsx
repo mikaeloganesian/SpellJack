@@ -72,12 +72,12 @@ const Player = ({ hand, score, isCardSelectionMode, onCardSwap }) => {
     // Используем сохраненный мультипликатор, если он есть, иначе текущий
     const suitMultiplier = card.suitMultiplierSnapshot || gameStore.getSuitMultiplier(card.suit);
     
-    // ✅ ИСПРАВЛЕНИЕ: Учитываем эффект "Огненный туз"
+    // Учитываем эффект "Огненный туз"
     let baseValue = 0;
     if (['J', 'Q', 'K'].includes(card.value)) {
       baseValue = 10;
     } else if (card.value === 'A') {
-      // ✅ Проверяем эффект "Огненный туз"
+      // Проверяем эффект "Огненный туз"
       if (gameStore.activeEffects.fireAce) {
         baseValue = 12; // Огненный туз = 12 очков
       } else {

@@ -122,7 +122,7 @@ const calculateScore = (hand, isPlayerHand = true) => {
 
 const MainGame = observer(() => {
   // VK функциональность
-  const { vibrate, shareScore, sendStats } = useVK();
+  const { vibrate, shareScore } = useVK();
   
   // dealer deck остаётся локально, колода игрока — только в store
   const [dealerDeck, setDealerDeck] = useState([]);
@@ -136,7 +136,7 @@ const MainGame = observer(() => {
   const [isGameActive, setIsGameActive] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // модалка с текущей колодой
+  // Модалка с текущей колодой
   const [showDeck, setShowDeck] = useState(false);
 
   // Состояние для карты "Обмен удачи"
@@ -290,14 +290,6 @@ const MainGame = observer(() => {
       gameResult = 'loss';
       vibrate('error');
     }
-    
-    // Отправляем статистику в VK
-    sendStats('game_finished', {
-      result: gameResult,
-      player_score: finalPlayerScore,
-      dealer_score: finalDealerScore,
-      target: target
-    });
     
     setIsGameActive(false);
   };
@@ -588,7 +580,7 @@ const MainGame = observer(() => {
     if (['J', 'Q', 'K'].includes(card.value)) {
       baseValue = 10;
     } else if (card.value === 'A') {
-      // ✅ ИСПРАВЛЕНИЕ: Учитываем эффект "Огненный туз"
+      // Учитываем эффект "Огненный туз"
       if (gameStore.activeEffects.fireAce) {
         baseValue = 12; // Огненный туз = 12 очков
       } else {
@@ -887,7 +879,7 @@ const MainGame = observer(() => {
     }, 100); // Небольшая задержка для корректного обновления
   };
 
-  // ✅ Функция для активации картографа (карта "Картограф")
+  // Функция для активации картографа (карта "Картограф")
   const handleCartographerActivate = () => {
     if (currentGamePlayerDeck.length === 0) {
       setWinner('❌ В колоде нет карт!');
@@ -995,7 +987,7 @@ const MainGame = observer(() => {
     setWinner('🔮 Предвидение: показаны следующие 2 карты в колоде!');
     vibrate('light');
     
-    // ✅ Убираем сообщение быстрее, чем карты
+    // Убираем сообщение быстрее, чем карты
     setTimeout(() => {
       setWinner('');
     }, 2000); // Сообщение исчезает через 2 сек
@@ -1007,7 +999,7 @@ const MainGame = observer(() => {
 
   return (
     <div className="main-game">
-      <h1 className="header">Blackjack</h1>
+      <h1 className="header">SpellJack</h1>
 
       {/* Модалка с текущей колодой */}
       <ActualDeckControl 
