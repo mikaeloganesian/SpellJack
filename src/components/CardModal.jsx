@@ -1,7 +1,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 
-const CardModal = observer(({ card, isOpen, onClose, onBuy, canAfford }) => {
+const CardModal = observer(({ card, isOpen, onClose, onBuy, canAfford, showBuySection = true }) => {
   if (!isOpen || !card) return null;
 
   const handleBackdropClick = (e) => {
@@ -58,16 +58,18 @@ const CardModal = observer(({ card, isOpen, onClose, onBuy, canAfford }) => {
               <p>{card.description || getCardDescription(card)}</p>
             </div>
 
-            <div className="cost-section">
-              <div className="card-cost-large">💰 {card.cost}</div>
-              <button 
-                className={`buy-button-large ${!canAfford ? 'disabled' : ''}`}
-                onClick={() => onBuy(card)}
-                disabled={!canAfford}
-              >
-                {canAfford ? 'Купить' : 'Недостаточно монет'}
-              </button>
-            </div>
+            {showBuySection && (
+              <div className="cost-section">
+                <div className="card-cost-large">💰 {card.cost}</div>
+                <button 
+                  className={`buy-button-large ${!canAfford ? 'disabled' : ''}`}
+                  onClick={() => onBuy(card)}
+                  disabled={!canAfford}
+                >
+                  {canAfford ? 'Купить' : 'Недостаточно монет'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

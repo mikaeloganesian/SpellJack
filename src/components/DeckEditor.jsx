@@ -1,14 +1,36 @@
+import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { gameStore } from '../Store';
+import CardModal from './CardModal';
 
 const DeckEditor = observer(() => {
+  // Состояние для модального окна
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Функции для модального окна
+  const handleCardClick = (card) => {
+    setSelectedCard(card);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedCard(null);
+  };
+
   const Card = ({ card, onClick, buttonText, isAddedToDeck }) => {
     const isRed = card.suit === '♥' || card.suit === '♦';
     const buttonClass = isAddedToDeck ? 'remove-card-button' : 'add-card-button';
     
     return (
       <div className="deck-card">
-        <div className={`card ${isRed ? 'red-card' : ''} ${card.special ? 'special-card' : ''}`}>
+        <div 
+          className={`card ${isRed ? 'red-card' : ''} ${card.special ? 'special-card' : ''}`}
+          onClick={() => handleCardClick(card)}
+          style={{ cursor: 'pointer' }}
+          title="Нажмите для просмотра информации"
+        >
           <div className="card-value">{card.value}</div>
           <div className="card-suit">{card.suit}</div>
         </div>
@@ -19,12 +41,46 @@ const DeckEditor = observer(() => {
 
   const SpecialCard = ({ card, onClick, buttonText, isAddedToDeck }) => {
     const buttonClass = isAddedToDeck ? 'remove-card-button' : 'add-card-button';
+
+    // Функция для сокращения длинных названий
+    const getShortName = (name) => {
+      const shortNames = {
+        'Открытый взгляд': 'Взгляд',
+        'Щит перегруза': 'Щит',
+        'Двойной удар': 'x2 Удар',
+        'Карта-ловушка': 'Ловушка',
+        'Обмен удачи': 'Обмен',
+        'Тузовая броня': 'Броня',
+        'Сброс напряжения': 'Сброс',
+        'Критический выбор': 'Выбор',
+        'Двойная ставка': 'x2 Ставка',
+        'Картограф': 'Карта',
+        'Огненный туз': 'Огонь',
+        'Счастливая семёрка': 'Семёрка',
+        'Листопад': 'Лист',
+        'Масть удачи': 'Удача',
+        'Карта предвидения': 'Видение',
+        'Стабилизатор': 'Стабил.',
+        'Золотое касание': 'Золото',
+        'Хронометр': 'Время',
+        'Магнит мастей': 'Магнит',
+        'Карта судьбы': 'Судьба',
+        'Королевский указ': 'Указ'
+      };
+      return shortNames[name] || name;
+    };
+    
     
     return (
       <div className="deck-card">
-        <div className="card special-card">
+        <div 
+          className="card special-card" 
+          onClick={() => handleCardClick(card)}
+          style={{ cursor: 'pointer' }}
+          title="Нажмите для просмотра информации"
+        >
           <div className="card-value">{card.value}</div>
-          <div className="card-suit">{card.name}</div>
+          <div className="card-suit">{getShortName(card.name)}</div>
         </div>
         <button className={buttonClass} onClick={() => onClick(card.id)}>{buttonText}</button>
       </div>
@@ -129,6 +185,13 @@ const DeckEditor = observer(() => {
           )}
         </div>
       </div>
+
+      <CardModal
+        card={selectedCard}
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        showBuySection={false}
+      />
     </div>
   );
 });

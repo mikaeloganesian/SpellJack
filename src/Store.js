@@ -43,7 +43,7 @@ const generateStartedOwnedDeck = () => {
 }
 
 class GameStore {
-  coins = 100;
+  coins = 10000;
   playerDeck = generateStarterDeck();        // Игровая колода (36 карт для игры)
   playerOwnedCards = generateStartedOwnedDeck(); // Все купленные карты (коллекция)
   availableCards = specialCards;
@@ -93,19 +93,21 @@ class GameStore {
     // 12. Счастливая семёрка
     luckySeven: false,
 
-    // 13. Хамелеон (обрабатывается в игровой логике)
+    // 13. Листопад (обрабатывается в игровой логике)
 
-    // 14. Масть удачи (изменяет suitMultipliers напрямую)
+    // 14. Масть удачи
+    luckySuitActive: null, // Какая масть получила буст
 
     // 15. Карта предвидения (обрабатывается в игровой логике)
 
-    // 16. Ледяное сердце
-    dealerFrozen: false,
+    // 16. Стабилизатор
+    stabilizer: false,
 
     // 17. Золотое касание
     goldenTouch: false,
 
-    // 18. Временная петля (обрабатывается в игровой логике)
+    // 18. Хронометр
+    chronometer: 0, // Количество оставшихся карт с половинными очками
 
     // 19. Магнит мастей 
     suitMagnetActive: null, // Активная масть для магнитного эффекта
@@ -198,8 +200,8 @@ class GameStore {
     }
 
     this.usedSpecialEffects.push(cardId);
-    this.applyCardEffect(card.effect);
-    return true;
+    const result = this.applyCardEffect(card.effect);
+    return result || true; // Возвращаем результат или true для обратной совместимости
   }
 
   applyCardEffect(effectName) {
@@ -254,40 +256,87 @@ class GameStore {
         this.activeEffects.luckySeven = true;
         break;
       
-      case 'chameleon':
-        console.log('Chameleon activated');
+      case 'leafFall':
+        // Листопад: сбрасывает случайную карту из руки и даёт +3 монеты
+        console.log('Листопад активирован');
         break;
       
       case 'luckySuit':
         const suits = ['♠', '♥', '♦', '♣'];
         const randomSuit = suits[Math.floor(Math.random() * suits.length)];
         const currentMultiplier = this.getSuitMultiplier(randomSuit);
-        this.suitMultipliers[randomSuit] = Math.min(currentMultiplier * 2, 4.0);
-        console.log(`Lucky suit activated: ${randomSuit} multiplier doubled to ${this.suitMultipliers[randomSuit]}`);
+        const newMultiplier = Math.min(currentMultiplier * 2, 4.0);
+        this.suitMultipliers[randomSuit] = newMultiplier;
+        this.activeEffects.luckySuitActive = randomSuit;
+        console.log(`Lucky suit activated: ${randomSuit} multiplier doubled to ${newMultiplier}`);
+        
+        // Возвращаем информацию для отображения
+        return {
+          success: true,
+          message: `🌟 Масть удачи: ${randomSuit} усилена до x${newMultiplier}!`
+        };
         break;
       
       case 'foresight':
         console.log('Foresight activated');
         break;
       
-      case 'freezeDealer':
-        this.activeEffects.dealerFrozen = true;
+      case 'stabilizer':
+        this.activeEffects.stabilizer = true;
+        // Устанавливаем все коэффициенты на 1.0
+        this.suitMultipliers = {
+          '♠': 1.0,
+          '♥': 1.0,
+          '♦': 1.0,
+          '♣': 1.0
+        };
+        console.log('Stabilizer activated: all suit multipliers set to 1.0');
+        
+        return {
+          success: true,
+          message: '⚖️ Стабилизатор: коэффициенты зафиксированы на 1.0!'
+        };
         break;
       
       case 'goldenTouch':
         this.activeEffects.goldenTouch = true;
+        console.log('Golden touch activated: next card will give coins equal to its score contribution');
+        
+        return {
+          success: true,
+          message: '✨ Золотое касание: следующая карта даст монеты равные её очкам!'
+        };
         break;
       
-      case 'timeLoop':
-        console.log('Time loop activated');
+      case 'chronometer':
+        this.activeEffects.chronometer = 2; // Следующие 2 карты дают половину очков
+        console.log('Chronometer activated: next 2 cards will give half points');
+        
+        return {
+          success: true,
+          message: '⏰ Хронометр: следующие 2 карты дают половину очков!'
+        };
         break;
       
       case 'suitMagnet':
-        console.log('Suit magnet activated');
+        // Для магнита мастей нужно показать выбор масти игроку
+        console.log('Suit magnet activated: player should choose a suit');
+        
+        return {
+          success: true,
+          requiresSuitChoice: true,
+          message: '🧲 Магнит мастей: выберите масть для усиления!'
+        };
         break;
       
       case 'destiny':
-        console.log('Destiny card activated');
+        // Карта судьбы показывает результат следующей карты
+        console.log('Destiny card activated: showing next card outcome');
+        return {
+          success: true,
+          requiresDestinyPreview: true,
+          message: '🎯 Карта судьбы: показываю исход следующей карты!'
+        };
         break;
       
       case 'royalDecree':
@@ -304,6 +353,94 @@ class GameStore {
     }
   }
 
+  // Применение магнита мастей - увеличение коэффициента выбранной масти
+  applySuitMagnet(chosenSuit) {
+    if (!chosenSuit || this.suitMultipliers[chosenSuit] === undefined) {
+      return { success: false, message: 'Некорректная масть!' };
+    }
+
+    // Увеличиваем коэффициент выбранной масти на 1
+    this.suitMultipliers[chosenSuit] += 1;
+    
+    // Отмечаем эффект как использованный
+    this.suitMagnetActive = false;
+
+    const suitNames = {
+      '♥': 'Червы',
+      '♦': 'Бубны', 
+      '♣': 'Трефы',
+      '♠': 'Пики'
+    };
+
+    return { 
+      success: true, 
+      message: `🧲 Магнит мастей: ${suitNames[chosenSuit]} +1 (теперь x${this.suitMultipliers[chosenSuit]})!` 
+    };
+  }
+
+  // Метод для карты судьбы - предпросмотр результата следующей карты
+  previewNextCardOutcome(playerHand, currentScore, nextCard) {
+    if (!nextCard || nextCard.special) {
+      return {
+        success: false,
+        message: 'Невозможно предсказать исход специальной карты!'
+      };
+    }
+
+    // Создаем временную руку с добавленной картой
+    const tempHand = [...playerHand, { ...nextCard }];
+    
+    // Рассчитываем базовое значение карты
+    let cardValue = 0;
+    if (['J', 'Q', 'K'].includes(nextCard.value)) {
+      cardValue = 10;
+    } else if (nextCard.value === 'A') {
+      // Учитываем эффект "Огненный туз"
+      if (this.activeEffects.fireAce) {
+        cardValue = 12;
+      } else {
+        cardValue = 11;
+      }
+    } else {
+      cardValue = parseInt(nextCard.value, 10);
+    }
+
+    // Применяем мультипликатор масти
+    const suitMultiplier = this.getSuitMultiplier(nextCard.suit);
+    cardValue = Math.floor(cardValue * suitMultiplier);
+
+    // Применяем эффект хронометра (половина очков)
+    if (this.activeEffects.chronometer > 0) {
+      cardValue = Math.floor(cardValue / 2);
+    }
+
+    // Применяем эффект двойного удара
+    if (this.activeEffects.doubleNext) {
+      cardValue *= 2;
+    }
+
+    // Применяем королевский указ (+2 очка)
+    if (this.activeEffects.royalDecree) {
+      cardValue += 2;
+    }
+
+    const predictedScore = currentScore + cardValue;
+    const isOverTarget = predictedScore > this.currentTarget;
+    const scoreChange = cardValue;
+
+    return {
+      success: true,
+      currentScore: currentScore,
+      nextCard: nextCard,
+      cardValue: cardValue,
+      predictedScore: predictedScore,
+      scoreChange: scoreChange,
+      isOverTarget: isOverTarget,
+      suitMultiplier: suitMultiplier,
+      message: `🎯 Следующая карта: ${nextCard.value}${nextCard.suit} (${cardValue} очков) → Итого: ${predictedScore} ${isOverTarget ? '⚠️ ПЕРЕБОР!' : '✅'}`
+    };
+  }
+
   // Сброс эффектов в начале новой игры
   resetGameEffects() {
     this.usedSpecialEffects = [];
@@ -318,8 +455,10 @@ class GameStore {
       doubleBet: false,
       fireAce: false,
       luckySeven: false,
+      luckySuitActive: null,
       dealerFrozen: false,
       goldenTouch: false,
+      chronometer: 0,
       royalDecree: false,
       suitMagnetActive: null,
       extraCard: false,
@@ -394,6 +533,11 @@ class GameStore {
       case 'luckySeven':
         if (context === 'gameStart') {
           this.activeEffects.luckySeven = true;
+        }
+        break;
+      case 'luckySuit':
+        if (context === 'gameStart') {
+          this.applyCardEffect('luckySuit');
         }
         break;
       case 'royalDecree':

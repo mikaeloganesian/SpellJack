@@ -7,10 +7,12 @@ const Card = ({ card, suitMultiplier, bonusPoints, isDoubleNextActive, isSelecta
   const willBeDoubled = isDoubleNextActive && !card.special;
   const isAceWithArmor = card.value === 'A' && gameStore.activeEffects.aceArmor;
   const isFireAce = card.value === 'A' && gameStore.activeEffects.fireAce;
+  const isLuckySeven = card.value === '7' && gameStore.activeEffects.luckySeven;
+  const isChronometerCard = card.chronometerEffect;
   
   return (
     <div 
-      className={`card ${isRed ? 'red-card' : ''} ${hasBonus ? 'bonus-card' : ''} ${willBeDoubled ? 'double-next-card' : ''} ${isSelectable ? 'selectable-card' : ''} ${isAceWithArmor ? 'ace-armor-card' : ''} ${isFireAce ? 'fire-ace-card' : ''}`}
+      className={`card ${isRed ? 'red-card' : ''} ${hasBonus ? 'bonus-card' : ''} ${willBeDoubled ? 'double-next-card' : ''} ${isSelectable ? 'selectable-card' : ''} ${isAceWithArmor ? 'ace-armor-card' : ''} ${isFireAce ? 'fire-ace-card' : ''} ${isLuckySeven ? 'lucky-seven-card' : ''} ${isChronometerCard ? 'chronometer-card' : ''}`}
       onClick={isSelectable ? () => onCardClick(cardIndex) : undefined}
       style={{ cursor: isSelectable ? 'pointer' : 'default' }}
     >
@@ -36,6 +38,16 @@ const Card = ({ card, suitMultiplier, bonusPoints, isDoubleNextActive, isSelecta
           🔥
         </div>
       )}
+      {isLuckySeven && (
+        <div className="lucky-seven-badge">
+          🍀
+        </div>
+      )}
+      {isChronometerCard && (
+        <div className="chronometer-badge">
+          ⏰ ½
+        </div>
+      )}
       {isSelectable && (
         <div className="swap-indicator">
           🔄
@@ -57,7 +69,8 @@ const Player = ({ hand, score, isCardSelectionMode, onCardSwap }) => {
   const getCardBonusInfo = (card) => {
     if (card.special) return { suitMultiplier: 1.0, bonusPoints: 0 };
     
-    const suitMultiplier = gameStore.getSuitMultiplier(card.suit);
+    // Используем сохраненный мультипликатор, если он есть, иначе текущий
+    const suitMultiplier = card.suitMultiplierSnapshot || gameStore.getSuitMultiplier(card.suit);
     
     // ✅ ИСПРАВЛЕНИЕ: Учитываем эффект "Огненный туз"
     let baseValue = 0;
@@ -88,6 +101,15 @@ const Player = ({ hand, score, isCardSelectionMode, onCardSwap }) => {
         )}
         {gameStore.activeEffects.fireAce && (
           <span className="fire-ace-indicator"> 🔥 Огненный туз</span>
+        )}
+        {gameStore.activeEffects.luckySeven && (
+          <span className="lucky-seven-indicator"> 🍀 Счастливая семёрка</span>
+        )}
+        {gameStore.activeEffects.chronometer > 0 && (
+          <span className="chronometer-indicator"> ⏰ Хронометр ({gameStore.activeEffects.chronometer})</span>
+        )}
+        {gameStore.activeEffects.royalDecree && (
+          <span className="royal-decree-indicator"> 👑 Королевский указ (+2 к каждой карте)</span>
         )}
         {isCardSelectionMode && (
           <span className="selection-hint"> - Выберите карту для обмена</span>

@@ -73,12 +73,26 @@ const calculateScore = (hand, isPlayerHand = true) => {
 
     // Применяем множитель для масти только для игрока
     if (isPlayerHand) {
-      const suitMultiplier = gameStore.getSuitMultiplier(card.suit);
+      // Используем сохраненный мультипликатор, если он есть, иначе текущий
+      const suitMultiplier = card.suitMultiplierSnapshot || gameStore.getSuitMultiplier(card.suit);
       cardValue = Math.floor(cardValue * suitMultiplier);
+      
+      // Применяем эффект хронометра (половина очков, округление вниз)
+      if (card.chronometerEffect) {
+        cardValue = Math.floor(cardValue / 2);
+        console.log(`⏰ Хронометр: очки карты ${card.value}${card.suit} уменьшены вдвое до ${cardValue}`);
+      }
     }
 
     score += cardValue;
     console.log(`Карта: ${card.value}${card.suit}, Значение: ${cardValue}, Текущий счёт: ${score}`);
+  }
+
+  // Применяем королевский указ (+2 очка к каждой карте ПОСЛЕ всех коэффициентов)
+  if (isPlayerHand && gameStore.activeEffects.royalDecree) {
+    const nonSpecialCards = hand.filter(card => !card.special).length;
+    score += nonSpecialCards * 2;
+    console.log(`👑 Королевский указ: +${nonSpecialCards * 2} очков (${nonSpecialCards} карт × 2)`);
   }
 
   // Стандартная логика для тузов: если есть тузы и перебор, 
@@ -135,6 +149,16 @@ const MainGame = observer(() => {
   // Состояние для карты "Картограф"
   const [nextCardSuit, setNextCardSuit] = useState(null);
 
+  // Состояние для карты "Карта предвидения"
+  const [foresightCards, setForesightCards] = useState([]);
+
+  // Состояние для выбора масти (магнит мастей)
+  const [showSuitChoice, setShowSuitChoice] = useState(false);
+
+  // Состояние для карты судьбы
+  const [destinyPreview, setDestinyPreview] = useState(null);
+  const [showDestinyPreview, setShowDestinyPreview] = useState(false);
+
   useEffect(() => {
     if (isGameActive) {
       startNewGame();
@@ -176,7 +200,18 @@ const MainGame = observer(() => {
 
     // раздаём по 2 карты, остаток колоды для текущей игры (НЕ сохраняем в store!)
     const currentGameDeck = [...shuffledPlayerDeck];
-    const newPlayerHand = [currentGameDeck.pop(), currentGameDeck.pop()];
+    const firstCard = currentGameDeck.pop();
+    const secondCard = currentGameDeck.pop();
+    
+    // Сохраняем мультипликаторы для начальных карт
+    if (firstCard && !firstCard.special) {
+      firstCard.suitMultiplierSnapshot = gameStore.getSuitMultiplier(firstCard.suit);
+    }
+    if (secondCard && !secondCard.special) {
+      secondCard.suitMultiplierSnapshot = gameStore.getSuitMultiplier(secondCard.suit);
+    }
+    
+    const newPlayerHand = [firstCard, secondCard];
     const newDealerHand = [shuffledDealerDeck.pop(), shuffledDealerDeck.pop()];
 
     // Сохраняем остаток колоды только для ТЕКУЩЕЙ игры, НЕ в store
@@ -190,6 +225,25 @@ const MainGame = observer(() => {
     setIsPlayerTurn(true);
     setWinner('');
     setIsGameActive(true);
+    
+    // Проверяем эффект "Счастливая семёрка" для начальных карт
+    if (gameStore.activeEffects.luckySeven) {
+      const initialSevens = newPlayerHand.filter(card => card.value === '7' && !card.special);
+      if (initialSevens.length > 0) {
+        const coinsEarned = initialSevens.length * 7;
+        gameStore.addCoins(coinsEarned);
+        console.log(`🍀 Счастливая семёрка! Найдено ${initialSevens.length} семёрок в начальной руке, получено +${coinsEarned} монет!`);
+        
+        // Показываем уведомление
+        setWinner(`🍀 Счастливая семёрка! Начальные семёрки дали +${coinsEarned} монет!`);
+        vibrate('success');
+        
+        // Убираем уведомление через 3 секунды
+        setTimeout(() => {
+          setWinner('');
+        }, 3000);
+      }
+    }
     
     // Очищаем состояния специальных карт
     setIsCardSelectionMode(false);
@@ -271,7 +325,40 @@ const MainGame = observer(() => {
       }
 
       if (newCard.special) {
-        gameStore.applyCardEffect(newCard.effect);
+        const result = gameStore.applyCardEffect(newCard.effect);
+        
+        // Если карта требует выбора масти, показываем модальное окно
+        if (result && result.requiresSuitChoice) {
+          setShowSuitChoice(true);
+          // Показываем сообщение пользователю
+          if (result.message) {
+            console.log(result.message);
+          }
+        }
+        
+        // Если карта судьбы, показываем предпросмотр следующей карты
+        if (result && result.requiresDestinyPreview) {
+          const nextCard = currentGamePlayerDeck[0]; // Следующая карта в колоде
+          if (nextCard) {
+            const preview = gameStore.previewNextCardOutcome(playerHand, playerScore, nextCard);
+            setDestinyPreview(preview);
+            setShowDestinyPreview(true);
+          }
+          // Показываем сообщение пользователю
+          if (result.message) {
+            console.log(result.message);
+          }
+        }
+      }
+
+      // Сохраняем мультипликатор масти на момент взятия карты
+      if (!newCard.special) {
+        newCard.suitMultiplierSnapshot = gameStore.getSuitMultiplier(newCard.suit);
+        
+        // Помечаем карту, если она взята под действием хронометра
+        if (gameStore.activeEffects.chronometer > 0) {
+          newCard.chronometerEffect = true;
+        }
       }
 
       let newPlayerHand = [...playerHand, newCard];
@@ -297,6 +384,61 @@ const MainGame = observer(() => {
         
         // Отключаем эффект после использования
         gameStore.activeEffects.doubleNext = false;
+      }
+
+      // ЛОГИКА ЗОЛОТОГО КАСАНИЯ
+      if (gameStore.activeEffects.goldenTouch && !newCard.special) {
+        console.log('✨ Золотое касание сработало!');
+        
+        // Вычисляем количество очков, которые добавляет карта (с учетом коэффициентов)
+        let cardValue = 0;
+        if (['J', 'Q', 'K'].includes(newCard.value)) {
+          cardValue = 10;
+        } else if (newCard.value === 'A') {
+          if (gameStore.activeEffects.fireAce) {
+            cardValue = 12;
+          } else {
+            cardValue = 11;
+          }
+        } else {
+          cardValue = parseInt(newCard.value, 10);
+        }
+
+        // Применяем мультипликатор масти (используем сохраненный)
+        const suitMultiplier = newCard.suitMultiplierSnapshot || gameStore.getSuitMultiplier(newCard.suit);
+        const finalCardValue = Math.floor(cardValue * suitMultiplier);
+        
+        // Добавляем монеты равные итоговым очкам карты
+        gameStore.addCoins(finalCardValue);
+        
+        // Показываем уведомление
+        setWinner(`✨ Золотое касание! ${newCard.value}${newCard.suit} дает +${finalCardValue} монет!`);
+        vibrate('success');
+
+        // Убираем уведомление через 3 секунды
+        setTimeout(() => {
+          setWinner('');
+        }, 3000);
+        
+        // Отключаем эффект после использования
+        gameStore.activeEffects.goldenTouch = false;
+      }
+
+      // ЛОГИКА СЧАСТЛИВОЙ СЕМЁРКИ
+      if (gameStore.activeEffects.luckySeven && newCard.value === '7' && !newCard.special) {
+        console.log('🍀 Счастливая семёрка сработала! +7 монет!');
+        
+        // Добавляем 7 монет
+        gameStore.addCoins(7);
+        
+        // Показываем уведомление
+        setWinner(`🍀 Счастливая семёрка! Получено +7 монет за ${newCard.value}${newCard.suit}!`);
+        vibrate('success');
+
+        // Убираем уведомление через 3 секунды
+        setTimeout(() => {
+          setWinner('');
+        }, 3000);
       }
 
 
@@ -331,6 +473,23 @@ const MainGame = observer(() => {
           newPlayerScore = calculateScore(newPlayerHand, true);
         }
         gameStore.activeEffects.extraCard = false;
+      }
+
+      // ЛОГИКА ХРОНОМЕТРА - уменьшение счётчика и показ уведомления
+      if (gameStore.activeEffects.chronometer > 0 && !newCard.special) {
+        gameStore.activeEffects.chronometer--;
+        console.log(`⏰ Хронометр: осталось ${gameStore.activeEffects.chronometer} карт с половинными очками`);
+        
+        if (gameStore.activeEffects.chronometer === 0) {
+          // Показываем уведомление о завершении эффекта
+          setWinner('⏰ Хронометр отключён! Карты снова дают полные очки.');
+          vibrate('light');
+          
+          // Убираем уведомление через 2 секунды
+          setTimeout(() => {
+            setWinner('');
+          }, 2000);
+        }
       }
 
       setPlayerHand(newPlayerHand);
@@ -439,8 +598,8 @@ const MainGame = observer(() => {
       baseValue = parseInt(card.value, 10);
     }
 
-    // Применяем множитель масти
-    const suitMultiplier = gameStore.getSuitMultiplier(card.suit);
+    // Применяем множитель масти (используем сохраненный мультипликатор)
+    const suitMultiplier = card.suitMultiplierSnapshot || gameStore.getSuitMultiplier(card.suit);
     const finalCardValue = Math.floor(baseValue * suitMultiplier);
     
     // Возвращаем столько же очков как бонус (удваивание)
@@ -470,6 +629,11 @@ const MainGame = observer(() => {
     // Заменяем карту в руке
     newPlayerHand[cardIndex] = newCard;
     
+    // Сохраняем мультипликатор масти для новой карты
+    if (!newCard.special) {
+      newCard.suitMultiplierSnapshot = gameStore.getSuitMultiplier(newCard.suit);
+    }
+    
     // Возвращаем старую карту обратно в колоду (в конец)
     newPlayerDeck.unshift(cardToSwap);
     
@@ -481,8 +645,52 @@ const MainGame = observer(() => {
     setCurrentGamePlayerDeck(shuffledDeck);
     setPlayerScore(calculateScore(newPlayerHand, true));
     
+    // Проверяем эффект "Золотое касание" для новой карты
+    let goldenTouchCoins = 0;
+    if (gameStore.activeEffects.goldenTouch && !newCard.special) {
+      console.log('✨ Золотое касание сработало при обмене!');
+      
+      // Вычисляем количество очков, которые добавляет карта (с учетом коэффициентов)
+      let cardValue = 0;
+      if (['J', 'Q', 'K'].includes(newCard.value)) {
+        cardValue = 10;
+      } else if (newCard.value === 'A') {
+        if (gameStore.activeEffects.fireAce) {
+          cardValue = 12;
+        } else {
+          cardValue = 11;
+        }
+      } else {
+        cardValue = parseInt(newCard.value, 10);
+      }
+
+      // Применяем мультипликатор масти (используем сохраненный)
+      const suitMultiplier = newCard.suitMultiplierSnapshot || gameStore.getSuitMultiplier(newCard.suit);
+      const finalCardValue = Math.floor(cardValue * suitMultiplier);
+      goldenTouchCoins = finalCardValue;
+      
+      // Добавляем монеты равные итоговым очкам карты
+      gameStore.addCoins(finalCardValue);
+      
+      // Отключаем эффект после использования
+      gameStore.activeEffects.goldenTouch = false;
+    }
+    
+    // Проверяем эффект "Счастливая семёрка" для новой карты
+    if (gameStore.activeEffects.luckySeven && newCard.value === '7' && !newCard.special) {
+      gameStore.addCoins(7);
+      console.log('🍀 Счастливая семёрка сработала при обмене! +7 монет!');
+    }
+    
     // Показываем уведомление
-    setWinner(`🔄 Обмен удачи! ${cardToSwap.value}${cardToSwap.suit} → ${newCard.value}${newCard.suit}`);
+    let message = `🔄 Обмен удачи! ${cardToSwap.value}${cardToSwap.suit} → ${newCard.value}${newCard.suit}`;
+    if (gameStore.activeEffects.luckySeven && newCard.value === '7' && !newCard.special) {
+      message += ' (+7 монет за семёрку!)';
+    }
+    if (goldenTouchCoins > 0) {
+      message += ` (✨ +${goldenTouchCoins} монет!)`;
+    }
+    setWinner(message);
     vibrate('success');
     
     // Убираем уведомление и выходим из режима выбора
@@ -514,16 +722,45 @@ const MainGame = observer(() => {
     
     // Берем две новые карты
     const newHand = [];
-    newHand.push(newPlayerDeck.pop());
-    newHand.push(newPlayerDeck.pop());
+    const firstCard = newPlayerDeck.pop();
+    const secondCard = newPlayerDeck.pop();
+    
+    // Сохраняем мультипликаторы для новых карт
+    if (firstCard && !firstCard.special) {
+      firstCard.suitMultiplierSnapshot = gameStore.getSuitMultiplier(firstCard.suit);
+    }
+    if (secondCard && !secondCard.special) {
+      secondCard.suitMultiplierSnapshot = gameStore.getSuitMultiplier(secondCard.suit);
+    }
+    
+    newHand.push(firstCard);
+    newHand.push(secondCard);
     
     // Обновляем состояние
     setPlayerHand(newHand);
     setCurrentGamePlayerDeck(newPlayerDeck);
     setPlayerScore(calculateScore(newHand, true));
     
+    // Проверяем эффект "Счастливая семёрка" для новых карт
+    if (gameStore.activeEffects.luckySeven) {
+      const newSevens = newHand.filter(card => card.value === '7' && !card.special);
+      if (newSevens.length > 0) {
+        const coinsEarned = newSevens.length * 7;
+        gameStore.addCoins(coinsEarned);
+        console.log(`🍀 Счастливая семёрка! Найдено ${newSevens.length} семёрок после сброса, получено +${coinsEarned} монет!`);
+      }
+    }
+    
     // Показываем уведомление
-    setWinner(`💥 Сброс напряжения! Новая рука получена!`);
+    let message = `💥 Сброс напряжения! Новая рука получена!`;
+    if (gameStore.activeEffects.luckySeven) {
+      const newSevens = newHand.filter(card => card.value === '7' && !card.special);
+      if (newSevens.length > 0) {
+        const coinsEarned = newSevens.length * 7;
+        message += ` (+${coinsEarned} монет за семёрки!)`;
+      }
+    }
+    setWinner(message);
     vibrate('success');
     
     // Убираем уведомление
@@ -558,6 +795,11 @@ const MainGame = observer(() => {
     newPlayerDeck.splice(-3, 3);
     
     // Добавляем выбранную карту в руку
+    // Сохраняем мультипликатор масти для выбранной карты
+    if (!chosenCard.special) {
+      chosenCard.suitMultiplierSnapshot = gameStore.getSuitMultiplier(chosenCard.suit);
+    }
+    
     const newPlayerHand = [...playerHand, chosenCard];
     const newPlayerScore = calculateScore(newPlayerHand, true);
     
@@ -565,6 +807,43 @@ const MainGame = observer(() => {
     setPlayerHand(newPlayerHand);
     setCurrentGamePlayerDeck(newPlayerDeck);
     setPlayerScore(newPlayerScore);
+    
+    // Проверяем эффект "Золотое касание" для выбранной карты
+    if (gameStore.activeEffects.goldenTouch && !chosenCard.special) {
+      console.log('✨ Золотое касание сработало при критическом выборе!');
+      
+      // Вычисляем количество очков, которые добавляет карта (с учетом коэффициентов)
+      let cardValue = 0;
+      if (['J', 'Q', 'K'].includes(chosenCard.value)) {
+        cardValue = 10;
+      } else if (chosenCard.value === 'A') {
+        if (gameStore.activeEffects.fireAce) {
+          cardValue = 12;
+        } else {
+          cardValue = 11;
+        }
+      } else {
+        cardValue = parseInt(chosenCard.value, 10);
+      }
+
+      // Применяем мультипликатор масти (используем сохраненный)
+      const suitMultiplier = chosenCard.suitMultiplierSnapshot || gameStore.getSuitMultiplier(chosenCard.suit);
+      const finalCardValue = Math.floor(cardValue * suitMultiplier);
+      
+      // Добавляем монеты равные итоговым очкам карты
+      gameStore.addCoins(finalCardValue);
+      
+      // Отключаем эффект после использования
+      gameStore.activeEffects.goldenTouch = false;
+      
+      console.log(`✨ Золотое касание: получено ${finalCardValue} монет за ${chosenCard.value}${chosenCard.suit}!`);
+    }
+    
+    // Проверяем эффект "Счастливая семёрка" для выбранной карты
+    if (gameStore.activeEffects.luckySeven && chosenCard.value === '7' && !chosenCard.special) {
+      gameStore.addCoins(7);
+      console.log('🍀 Счастливая семёрка сработала при критическом выборе! +7 монет!');
+    }
     
     // Сбрасываем состояние критического выбора
     setIsCriticalChoiceMode(false);
@@ -593,7 +872,11 @@ const MainGame = observer(() => {
         }
       } else {
         // Показываем уведомление о выборе карты
-        setWinner(`🔍 Критический выбор! Получена: ${chosenCard.value}${chosenCard.suit}`);
+        let message = `🔍 Критический выбор! Получена: ${chosenCard.value}${chosenCard.suit}`;
+        if (gameStore.activeEffects.luckySeven && chosenCard.value === '7' && !chosenCard.special) {
+          message += ' (+7 монет за семёрку!)';
+        }
+        setWinner(message);
         vibrate('success');
         
         // Убираем уведомление через 3 секунды
@@ -626,6 +909,102 @@ const MainGame = observer(() => {
     }, 5000);
   };
 
+  // Функция для активации листопада (карта "Листопад")
+  const handleLeafFallActivate = () => {
+    if (playerHand.length === 0) {
+      setWinner('❌ Нет карт в руке для сброса!');
+      setTimeout(() => setWinner(''), 2000);
+      return;
+    }
+
+    // Сбрасываем случайную карту из руки
+    const randomIndex = Math.floor(Math.random() * playerHand.length);
+    const droppedCard = playerHand[randomIndex];
+    const newHand = playerHand.filter((_, index) => index !== randomIndex);
+    
+    setPlayerHand(newHand);
+    setPlayerScore(calculateScore(newHand, true));
+    
+    // Даём +3 монеты
+    gameStore.addCoins(3);
+    
+    setWinner(`🍃 Листопад: сброшена ${droppedCard.value}${droppedCard.suit}, +3 💰`);
+    vibrate('success');
+    
+    // Убираем сообщение через 3 секунды
+    setTimeout(() => {
+      setWinner('');
+    }, 3000);
+  };
+
+  // Функция для активации магнита мастей
+  const handleSuitMagnetActivate = () => {
+    setShowSuitChoice(true);
+  };
+
+  // Функция для активации карты судьбы
+  const handleDestinyActivate = () => {
+    // Берем последнюю карту из колоды (так как drawFromPlayerDeck использует pop())
+    const nextCard = currentGamePlayerDeck[currentGamePlayerDeck.length - 1];
+    if (nextCard) {
+      const preview = gameStore.previewNextCardOutcome(playerHand, playerScore, nextCard);
+      setDestinyPreview(preview);
+      setShowDestinyPreview(true);
+    } else {
+      setWinner('🎯 В колоде нет карт для предсказания!');
+      setTimeout(() => setWinner(''), 2000);
+    }
+  };
+
+  // Функция для закрытия предпросмотра карты судьбы
+  const handleDestinyPreviewClose = () => {
+    setShowDestinyPreview(false);
+    setDestinyPreview(null);
+  };
+
+  // Функция для выбора масти для магнита мастей
+  const handleSuitChoice = (suitSymbol) => {
+    const result = gameStore.applySuitMagnet(suitSymbol);
+    if (result.success) {
+      setWinner(result.message);
+      setTimeout(() => setWinner(''), 3000);
+    } else {
+      setWinner(result.message);
+      setTimeout(() => setWinner(''), 2000);
+    }
+    
+    setShowSuitChoice(false);
+  };
+
+  // Функция для активации карты предвидения
+  const handleForesightActivate = () => {
+    if (currentGamePlayerDeck.length < 2) {
+      setWinner('🔮 В колоде мало карт для предвидения!');
+      setTimeout(() => setWinner(''), 2000);
+      return;
+    }
+
+    const deckLength = currentGamePlayerDeck.length;
+    const nextTwoCards = [
+      currentGamePlayerDeck[deckLength - 1],
+      currentGamePlayerDeck[deckLength - 2]
+    ];
+    
+    setForesightCards(nextTwoCards);
+    
+    setWinner('🔮 Предвидение: показаны следующие 2 карты в колоде!');
+    vibrate('light');
+    
+    // ✅ Убираем сообщение быстрее, чем карты
+    setTimeout(() => {
+      setWinner('');
+    }, 2000); // Сообщение исчезает через 2 сек
+    
+    setTimeout(() => {
+      setForesightCards([]);
+    }, 5000); // Карты исчезают через 5 сек
+  };
+
   return (
     <div className="main-game">
       <h1 className="header">Blackjack</h1>
@@ -649,23 +1028,37 @@ const MainGame = observer(() => {
         <div className="suit-multipliers">
           <h4>Suit Multipliers:</h4>
           <div className="multipliers-table">
-            <div className="multiplier-item">
+            <div className={`multiplier-item ${gameStore.activeEffects.luckySuitActive === '♠' ? 'lucky-suit-boosted' : ''}`}>
               <span className="suit-symbol">♠</span>
               <span className="multiplier-value">x{gameStore.getSuitMultiplier('♠')}</span>
             </div>
-            <div className="multiplier-item">
+            <div className={`multiplier-item ${gameStore.activeEffects.luckySuitActive === '♥' ? 'lucky-suit-boosted' : ''}`}>
               <span className="suit-symbol red-suit">♥</span>
               <span className="multiplier-value">x{gameStore.getSuitMultiplier('♥')}</span>
             </div>
-            <div className="multiplier-item">
+            <div className={`multiplier-item ${gameStore.activeEffects.luckySuitActive === '♦' ? 'lucky-suit-boosted' : ''}`}>
               <span className="suit-symbol red-suit">♦</span>
               <span className="multiplier-value">x{gameStore.getSuitMultiplier('♦')}</span>
             </div>
-            <div className="multiplier-item">
+            <div className={`multiplier-item ${gameStore.activeEffects.luckySuitActive === '♣' ? 'lucky-suit-boosted' : ''}`}>
               <span className="suit-symbol">♣</span>
               <span className="multiplier-value">x{gameStore.getSuitMultiplier('♣')}</span>
             </div>
           </div>
+          
+          {/* Индикатор стабилизатора */}
+          {gameStore.activeEffects.stabilizer && (
+            <div className="stabilizer-indicator">
+              ⚖️ Стабилизатор активен - коэффициенты x1.0
+            </div>
+          )}
+          
+          {/* Индикатор золотого касания */}
+          {gameStore.activeEffects.goldenTouch && (
+            <div className="golden-touch-indicator">
+              ✨ Золотое касание готово - следующая карта даст монеты!
+            </div>
+          )}
         </div>
         
       </div>
@@ -697,6 +1090,75 @@ const MainGame = observer(() => {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Панель выбора масти для магнита мастей */}
+      {showSuitChoice && (
+        <div className="suit-choice-panel">
+          <h3>🧲 Магнит мастей - выберите масть для усиления:</h3>
+          <div className="suit-choice-options">
+            {['♥', '♦', '♣', '♠'].map((suit) => {
+              const isRed = suit === '♥' || suit === '♦';
+              return (
+                <div 
+                  key={suit}
+                  className={`suit-choice-option ${isRed ? 'red-suit' : 'black-suit'}`}
+                  onClick={() => handleSuitChoice(suit)}
+                >
+                  <div className="suit-symbol">{suit}</div>
+                  <div className="suit-name">
+                    {suit === '♥' ? 'Червы' : 
+                     suit === '♦' ? 'Бубны' :
+                     suit === '♣' ? 'Трефы' : 'Пики'}
+                  </div>
+                  <div className="current-multiplier">
+                    x{gameStore.getSuitMultiplier(suit)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Панель предсказания карты судьбы */}
+      {showDestinyPreview && destinyPreview && (
+        <div className="destiny-preview-panel">
+          <h3>🔮 Карта судьбы - предсказание будущего:</h3>
+          <div className="destiny-preview-content">
+            <div className="predicted-card">
+              <div className={`card ${(destinyPreview.nextCard.suit === '♥' || destinyPreview.nextCard.suit === '♦') ? 'red-card' : ''}`}>
+                <div className="card-value">{destinyPreview.nextCard.value}</div>
+                <div className="card-suit">{destinyPreview.nextCard.suit}</div>
+              </div>
+              <div className="card-info">
+                <div>Следующая карта</div>
+                <div className="card-name">{destinyPreview.nextCard.name}</div>
+              </div>
+            </div>
+            <div className="prediction-results">
+              <div className="prediction-item">
+                <span>Текущие очки:</span>
+                <span className="current-score">{destinyPreview.currentScore}</span>
+              </div>
+              <div className="prediction-item main-prediction">
+                <span>Предсказанные очки:</span>
+                <span className="predicted-score">{destinyPreview.predictedScore}</span>
+              </div>
+              <div className="prediction-item">
+                <span>Изменение:</span>
+                <span className={`score-change ${destinyPreview.scoreChange >= 0 ? 'positive' : 'negative'}`}>
+                  {destinyPreview.scoreChange >= 0 ? '+' : ''}{destinyPreview.scoreChange}
+                </span>
+              </div>
+            </div>
+            <div className="destiny-actions">
+              <button className="destiny-close-btn" onClick={handleDestinyPreviewClose}>
+                Понятно
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -735,6 +1197,26 @@ const MainGame = observer(() => {
             )}
           </div>
         )}
+
+        {/* Отображение карт предвидения */}
+        {foresightCards.length > 0 && (
+          <div className="foresight-section">
+            <h3>🔮 Следующие карты в колоде:</h3>
+            <div className="foresight-cards">
+              {foresightCards.map((card, index) => {
+                const isRed = card.suit === '♥' || card.suit === '♦';
+                return (
+                  <div key={`foresight-${index}`} className={`foresight-card ${isRed ? 'red-card' : ''}`}>
+                    <div className="card-value">{card.value}</div>
+                    <div className="card-suit">{card.suit}</div>
+                    <div className="card-order">{index + 1}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <Player 
           hand={playerHand} 
           score={playerScore} 
@@ -750,6 +1232,10 @@ const MainGame = observer(() => {
         onResetHand={handleResetHand}
         onCriticalChoiceActivate={handleCriticalChoiceActivate}
         onCartographerActivate={handleCartographerActivate}
+        onLeafFallActivate={handleLeafFallActivate}
+        onForesightActivate={handleForesightActivate}
+        onSuitMagnetActivate={handleSuitMagnetActivate}
+        onDestinyActivate={handleDestinyActivate}
         isBlocked={isCriticalChoiceMode}
       />
 

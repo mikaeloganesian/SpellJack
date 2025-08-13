@@ -1,8 +1,8 @@
 /* --- Глобальные стили и шрифты (из index.css) --- */
-@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap');
 
 :root {
-  font-family: 'MedievalSharp', cursive, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Merriweather', cursive, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -112,13 +112,14 @@ button:focus-visible {
 
 body {
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .app {
   width: 100vw;
   box-sizing: border-box;
   text-align: center;
-  font-family: 'MedievalSharp', cursive, Arial, sans-serif;
+  font-family: 'Merriweather', cursive, Arial, sans-serif;
   background-color: #0f4c3a;
   color: #ecf0f1;
   min-height: 100vh;
@@ -131,7 +132,12 @@ body {
 /* Стили для VK Mini App */
 .app.vk-app {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f4c3a 0%, #1a5c4a 100%);
+  max-height: 100vh;
+  font-family: 'Merriweather', cursive, Arial, sans-serif;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: #0f4c3a;
+  background-image: url('https://www.transparenttextures.com/patterns/dark-wood.png');
 }
 
 .user-info {
@@ -204,7 +210,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 30px;
+  gap: 20px;
   margin-bottom: 15px;
   flex-wrap: wrap;
 }
@@ -251,6 +257,87 @@ body {
   font-weight: bold;
 }
 
+/* Стили для усиленной масти */
+.multiplier-item.lucky-suit-boosted {
+  animation: suitBoostedGlow 2s ease-in-out infinite;
+  transform: scale(1.1);
+  border-radius: 8px;
+  padding: 8px;
+  position: relative;
+}
+
+.multiplier-item.lucky-suit-boosted .suit-symbol {
+  color: #f39c12 !important;
+  text-shadow: 0 0 15px rgba(243, 156, 18, 1), 0 0 30px rgba(243, 156, 18, 0.5);
+}
+
+.multiplier-item.lucky-suit-boosted .multiplier-value {
+  color: #e67e22;
+  font-size: 1.1em;
+  text-shadow: 0 0 12px rgba(230, 126, 34, 0.8), 0 0 25px rgba(230, 126, 34, 0.4);
+}
+
+@keyframes suitBoostedGlow {
+  0%, 100% {
+    box-shadow: 
+      0 0 15px rgba(243, 156, 18, 0.6),
+      inset 0 0 15px rgba(243, 156, 18, 0.2);
+    background: radial-gradient(circle, rgba(243, 156, 18, 0.1) 0%, rgba(243, 156, 18, 0.05) 70%, transparent 100%);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(243, 156, 18, 0.9),
+      inset 0 0 25px rgba(243, 156, 18, 0.3);
+    background: radial-gradient(circle, rgba(243, 156, 18, 0.2) 0%, rgba(243, 156, 18, 0.1) 70%, transparent 100%);
+  }
+}
+
+/* Стили для индикатора стабилизатора */
+.stabilizer-indicator {
+  background: linear-gradient(145deg, #2ecc71, #27ae60);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-top: 10px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 0.9em;
+  box-shadow: 0 4px 8px rgba(46, 204, 113, 0.3);
+  animation: stabilizerIndicatorGlow 2.5s ease-in-out infinite;
+}
+
+@keyframes stabilizerIndicatorGlow {
+  0%, 100% {
+    box-shadow: 0 4px 8px rgba(46, 204, 113, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.6);
+  }
+}
+
+/* Стили для индикатора золотого касания */
+.golden-touch-indicator {
+  background: linear-gradient(145deg, #ffd700, #ff8c00);
+  color: #8b4513;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-top: 10px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 0.9em;
+  box-shadow: 0 4px 8px rgba(255, 215, 0, 0.4);
+  animation: goldenTouchIndicatorGlow 2.5s ease-in-out infinite;
+}
+
+@keyframes goldenTouchIndicatorGlow {
+  0%, 100% {
+    box-shadow: 0 4px 8px rgba(255, 215, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.7);
+  }
+}
+
 .bonus-card {
   border-color: #f39c12 !important;
   box-shadow: 0 0 10px rgba(243, 156, 18, 0.5), 4px 4px 8px rgba(0, 0, 0, 0.5) !important;
@@ -277,6 +364,7 @@ body {
   position: absolute;
   top: 20px;
   width: 100%;
+  z-index: 100;
 }
 
 .winner-message {
@@ -571,6 +659,108 @@ body {
   }
 }
 
+/* Стили для отображения карт предвидения */
+.foresight-section {
+  background: rgba(155, 89, 182, 0.1);
+  border: 2px solid rgba(155, 89, 182, 0.3);
+  border-radius: 12px;
+  padding: 15px;
+  margin: 15px 0;
+  text-align: center;
+  animation: foresightSectionGlow 2s ease-in-out infinite;
+}
+
+.foresight-section h3 {
+  color: #dda0dd;
+  margin: 0 0 15px 0;
+  font-size: 1.3em;
+  text-shadow: 0 0 8px rgba(155, 89, 182, 0.6);
+}
+
+.foresight-cards {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.foresight-card {
+  width: 80px;
+  height: 120px;
+  background: linear-gradient(145deg, #34495e, #2c3e50);
+  border: 2px solid #f1c40f;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: default;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  animation: foresightCardFloat 2.5s ease-in-out infinite;
+}
+
+.foresight-card.red-card {
+  border-color: #e74c3c;
+}
+
+.foresight-card .card-value {
+  font-size: 1.8em;
+  font-weight: bold;
+  color: #f1c40f;
+  margin-bottom: 5px;
+}
+
+.foresight-card.red-card .card-value {
+  color: #e74c3c;
+}
+
+.foresight-card .card-suit {
+  font-size: 1.5em;
+  color: #f1c40f;
+}
+
+.foresight-card.red-card .card-suit {
+  color: #e74c3c;
+}
+
+.foresight-card .card-order {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(145deg, #9b59b6, #8e44ad);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8em;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(155, 89, 182, 0.5);
+}
+
+@keyframes foresightSectionGlow {
+  0%, 100% {
+    border-color: rgba(155, 89, 182, 0.3);
+    box-shadow: 0 0 0px rgba(155, 89, 182, 0.1);
+  }
+  50% {
+    border-color: rgba(155, 89, 182, 0.6);
+    box-shadow: 0 0 15px rgba(155, 89, 182, 0.2);
+  }
+}
+
+@keyframes foresightCardFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
 .animate-deal {
   animation: deal-card 0.5s forwards;
 }
@@ -664,7 +854,7 @@ body {
 
 .nav-links {
   display: flex;
-  gap: 20px;
+  gap: 10px;
 }
 
 .nav-link {
@@ -828,6 +1018,12 @@ p {
   margin: 0;
   /*transform: none !important;*/
   animation: none !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.deck-card .card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
 }
 
 .add-card-button,
@@ -879,7 +1075,7 @@ p {
 }
 
 .card.special-card .card-value {
-  font-size: 1.8em; /* Увеличиваем размер эмодзи */
+  font-size: 1.5em; /* Увеличиваем размер эмодзи */
 }
 
 .card.special-card .card-suit {
@@ -1262,6 +1458,250 @@ p {
   }
 }
 
+/* Стили для карты "Листопад" */
+.special-card-item.leaf-fall-effect {
+  border-color: #228b22 !important;
+  background: linear-gradient(145deg, #2e8b57, #228b22);
+  box-shadow: 0 6px 16px rgba(34, 139, 34, 0.6);
+  animation: leafFallGlow 2.5s ease-in-out infinite;
+}
+
+.special-card-item.leaf-fall-effect:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(34, 139, 34, 0.8);
+}
+
+.special-card-item.leaf-fall-effect .activation-hint {
+  color: #90ee90;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(34, 139, 34, 0.6);
+}
+
+@keyframes leafFallGlow {
+  0%, 100% {
+    box-shadow: 0 6px 16px rgba(34, 139, 34, 0.6);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(34, 139, 34, 0.9);
+  }
+}
+
+/* Стили для карты "Карта предвидения" */
+.special-card-item.foresight-effect {
+  border-color: #9b59b6 !important;
+  background: linear-gradient(145deg, #8e44ad, #9b59b6);
+  box-shadow: 0 6px 16px rgba(155, 89, 182, 0.6);
+  animation: foresightGlow 3s ease-in-out infinite;
+}
+
+.special-card-item.foresight-effect:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(155, 89, 182, 0.8);
+}
+
+.special-card-item.foresight-effect .activation-hint {
+  color: #dda0dd;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(155, 89, 182, 0.6);
+}
+
+@keyframes foresightGlow {
+  0%, 100% {
+    box-shadow: 0 6px 16px rgba(155, 89, 182, 0.6);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(155, 89, 182, 0.9);
+  }
+}
+
+/* Стили для карты "Стабилизатор" */
+.special-card-item.stabilizer-effect {
+  border-color: #95a5a6 !important;
+  background: linear-gradient(145deg, #7f8c8d, #95a5a6);
+  box-shadow: 0 6px 16px rgba(149, 165, 166, 0.6);
+  animation: stabilizerGlow 2s ease-in-out infinite;
+}
+
+.special-card-item.stabilizer-effect.active {
+  border-color: #2ecc71 !important;
+  background: linear-gradient(145deg, #27ae60, #2ecc71);
+  box-shadow: 0 6px 16px rgba(46, 204, 113, 0.8);
+  animation: stabilizerActiveGlow 2s ease-in-out infinite;
+}
+
+.special-card-item.stabilizer-effect:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(149, 165, 166, 0.8);
+}
+
+.special-card-item.stabilizer-effect.active:hover {
+  box-shadow: 0 8px 20px rgba(46, 204, 113, 1);
+}
+
+.special-card-item.stabilizer-effect .activation-hint {
+  color: #ecf0f1;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(149, 165, 166, 0.6);
+}
+
+.special-card-item.stabilizer-effect.active .activation-hint {
+  color: #d5f4e6;
+  text-shadow: 0 0 8px rgba(46, 204, 113, 0.8);
+}
+
+@keyframes stabilizerGlow {
+  0%, 100% {
+    box-shadow: 0 6px 16px rgba(149, 165, 166, 0.6);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(149, 165, 166, 0.9);
+  }
+}
+
+@keyframes stabilizerActiveGlow {
+  0%, 100% {
+    box-shadow: 0 6px 16px rgba(46, 204, 113, 0.8);
+  }
+  50% {
+    box-shadow: 0 6px 24px rgba(46, 204, 113, 1);
+  }
+}
+
+/* Стили для карты "Золотое касание" */
+.special-card-item.golden-touch-effect {
+  border-color: #f1c40f !important;
+  background: linear-gradient(145deg, #f39c12, #f1c40f);
+  box-shadow: 0 6px 16px rgba(241, 196, 15, 0.6);
+  animation: goldenTouchGlow 2s ease-in-out infinite;
+}
+
+.special-card-item.golden-touch-effect.active {
+  border-color: #ffd700 !important;
+  background: linear-gradient(145deg, #ff8c00, #ffd700);
+  box-shadow: 0 6px 16px rgba(255, 215, 0, 0.8);
+  animation: goldenTouchActiveGlow 2s ease-in-out infinite;
+}
+
+.special-card-item.golden-touch-effect:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(241, 196, 15, 0.8);
+}
+
+.special-card-item.golden-touch-effect.active:hover {
+  box-shadow: 0 8px 20px rgba(255, 215, 0, 1);
+}
+
+.special-card-item.golden-touch-effect .activation-hint {
+  color: #2c3e50;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(241, 196, 15, 0.6);
+}
+
+.special-card-item.golden-touch-effect.active .activation-hint {
+  color: #8b4513;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+}
+
+@keyframes goldenTouchGlow {
+  0%, 100% {
+    box-shadow: 0 6px 16px rgba(241, 196, 15, 0.6);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(241, 196, 15, 0.9);
+  }
+}
+
+/* Стили для эффекта хронометра */
+.special-card-item.chronometer-effect {
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  border: 2px solid #74b9ff;
+}
+
+.special-card-item.chronometer-effect.active {
+  background: linear-gradient(135deg, #5f3dc4, #7209b7);
+  border: 2px solid #ffd32a;
+  animation: chronometerGlow 2s ease-in-out infinite;
+}
+
+.special-card-item.chronometer-effect:hover {
+  background: linear-gradient(135deg, #7c4dff, #b388ff);
+  transform: translateY(-3px);
+}
+
+.special-card-item.chronometer-effect.active:hover {
+  background: linear-gradient(135deg, #6a0dad, #8a2be2);
+}
+
+.special-card-item.chronometer-effect .activation-hint {
+  color: #ffffff;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(116, 185, 255, 0.6);
+}
+
+.special-card-item.chronometer-effect.active .activation-hint {
+  color: #ffd32a;
+  text-shadow: 0 0 8px rgba(255, 211, 42, 0.8);
+}
+
+@keyframes chronometerGlow {
+  0%, 100% {
+    box-shadow: 0 6px 16px rgba(116, 185, 255, 0.6);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(255, 211, 42, 0.9);
+  }
+}
+
+/* Стили для эффекта магнита мастей */
+.special-card-item.suit-magnet-effect {
+  background: linear-gradient(135deg, #2c3e50, #34495e);
+  border: 2px solid #95a5a6;
+}
+
+.special-card-item.suit-magnet-effect.active {
+  background: linear-gradient(135deg, #1a252f, #2c3e50);
+  border: 2px solid #f39c12;
+  animation: suitMagnetGlow 2s ease-in-out infinite;
+}
+
+.special-card-item.suit-magnet-effect:hover {
+  background: linear-gradient(135deg, #34495e, #4a6741);
+  transform: translateY(-3px);
+}
+
+.special-card-item.suit-magnet-effect.active:hover {
+  background: linear-gradient(135deg, #16a085, #27ae60);
+}
+
+.special-card-item.suit-magnet-effect .activation-hint {
+  color: #ecf0f1;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(149, 165, 166, 0.6);
+}
+
+.special-card-item.suit-magnet-effect.active .activation-hint {
+  color: #f39c12;
+  text-shadow: 0 0 8px rgba(243, 156, 18, 0.8);
+}
+
+@keyframes suitMagnetGlow {
+  0%, 100% {
+    box-shadow: 0 6px 16px rgba(149, 165, 166, 0.6);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(243, 156, 18, 0.9);
+  }
+}
+
+@keyframes goldenTouchActiveGlow {
+  0%, 100% {
+    box-shadow: 0 6px 16px rgba(255, 215, 0, 0.8);
+  }
+  50% {
+    box-shadow: 0 6px 24px rgba(255, 215, 0, 1);
+  }
+}
+
 /* Стили для пассивных эффектов */
 .special-card-item.passive-effect {
   border-color: #27ae60 !important;
@@ -1313,6 +1753,38 @@ p {
   border-color: #2ecc71 !important;
   background: linear-gradient(145deg, #239954, #1e7e45);
   box-shadow: 0 6px 16px rgba(46, 204, 113, 0.4);
+}
+
+.special-card-item.passive-effect.lucky-suit-effect {
+  border-color: #f39c12 !important;
+  background: linear-gradient(145deg, #d68910, #b7740f);
+  box-shadow: 0 6px 16px rgba(243, 156, 18, 0.6);
+  animation: luckySuitGlow 3s ease-in-out infinite;
+}
+
+@keyframes luckySuitGlow {
+  0%, 100% {
+    box-shadow: 0 6px 16px rgba(243, 156, 18, 0.6);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(243, 156, 18, 0.9);
+  }
+}
+
+.special-card-item.passive-effect.royal-effect {
+  border-color: #f1c40f !important;
+  background: linear-gradient(145deg, #f39c12, #d68910);
+  box-shadow: 0 6px 16px rgba(241, 196, 15, 0.6);
+  animation: royalGlow 2.5s ease-in-out infinite;
+}
+
+@keyframes royalGlow {
+  0%, 100% {
+    box-shadow: 0 6px 16px rgba(241, 196, 15, 0.6);
+  }
+  50% {
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.8);
+  }
 }
 
 .special-card-item.passive-effect.royal-effect {
@@ -1565,7 +2037,7 @@ deck-card.special .add-card-button,
 .modal-header h3 {
   margin: 0;
   color: var(--color-text);
-  font-family: 'MedievalSharp', cursive;
+  font-family: 'Merriweather', cursive;
   font-size: 1.3em;
   margin-bottom: 15px;
 }
@@ -1698,7 +2170,7 @@ deck-card.special .add-card-button,
 .card-info h4 {
   margin: 0 0 15px 0;
   color: var(--color-text);
-  font-family: 'MedievalSharp', cursive;
+  font-family: 'Merriweather', cursive;
   font-size: 1.2em;
   text-align: center;
 }
@@ -1938,6 +2410,15 @@ deck-card.special .add-card-button,
   animation: fireAceGlow 1.5s ease-in-out infinite alternate;
 }
 
+/* Индикатор Счастливой семёрки */
+.lucky-seven-indicator {
+  color: #27ae60;
+  font-size: 0.9em;
+  font-weight: normal;
+  text-shadow: 0 0 12px rgba(39, 174, 96, 0.7);
+  animation: luckySevenGlow 2s ease-in-out infinite alternate;
+}
+
 @keyframes aceArmorGlow {
   from {
     text-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
@@ -1956,6 +2437,51 @@ deck-card.special .add-card-button,
   }
 }
 
+@keyframes luckySevenGlow {
+  from {
+    text-shadow: 0 0 12px rgba(39, 174, 96, 0.7);
+  }
+  to {
+    text-shadow: 0 0 22px rgba(39, 174, 96, 1.0), 0 0 30px rgba(46, 204, 113, 0.5);
+  }
+}
+
+/* Индикатор Хронометра */
+.chronometer-indicator {
+  color: #6c5ce7;
+  font-size: 0.9em;
+  font-weight: normal;
+  text-shadow: 0 0 12px rgba(108, 92, 231, 0.7);
+  animation: chronometerIndicatorGlow 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes chronometerIndicatorGlow {
+  from {
+    text-shadow: 0 0 12px rgba(108, 92, 231, 0.7);
+  }
+  to {
+    text-shadow: 0 0 22px rgba(116, 185, 255, 1.0), 0 0 30px rgba(108, 92, 231, 0.5);
+  }
+}
+
+/* Индикатор Королевского указа */
+.royal-decree-indicator {
+  color: #f1c40f;
+  font-size: 0.9em;
+  font-weight: bold;
+  text-shadow: 0 0 12px rgba(241, 196, 15, 0.8);
+  animation: royalDecreeIndicatorGlow 2.0s ease-in-out infinite alternate;
+}
+
+@keyframes royalDecreeIndicatorGlow {
+  from {
+    text-shadow: 0 0 12px rgba(241, 196, 15, 0.8);
+  }
+  to {
+    text-shadow: 0 0 25px rgba(241, 196, 15, 1.0), 0 0 35px rgba(255, 215, 0, 0.6);
+  }
+}
+
 /* Стили для карт с Тузовой броней */
 .ace-armor-card {
   border: 2px solid #f39c12;
@@ -1968,6 +2494,13 @@ deck-card.special .add-card-button,
   border: 2px solid #e74c3c;
   box-shadow: 0 0 20px rgba(231, 76, 60, 0.5);
   animation: fireAceCardGlow 1.5s ease-in-out infinite alternate;
+}
+
+/* Стили для карт со Счастливой семёркой */
+.lucky-seven-card {
+  border: 2px solid #27ae60;
+  box-shadow: 0 0 18px rgba(39, 174, 96, 0.6);
+  animation: luckySevenCardGlow 2s ease-in-out infinite alternate;
 }
 
 @keyframes aceArmorCardGlow {
@@ -1985,6 +2518,15 @@ deck-card.special .add-card-button,
   }
   to {
     box-shadow: 0 0 30px rgba(231, 76, 60, 0.8), 0 0 40px rgba(255, 165, 0, 0.4);
+  }
+}
+
+@keyframes luckySevenCardGlow {
+  from {
+    box-shadow: 0 0 18px rgba(39, 174, 96, 0.6);
+  }
+  to {
+    box-shadow: 0 0 28px rgba(39, 174, 96, 0.9), 0 0 38px rgba(46, 204, 113, 0.4);
   }
 }
 
@@ -2021,6 +2563,23 @@ deck-card.special .add-card-button,
   animation: fireAceBadgeGlow 1.5s ease-in-out infinite alternate;
 }
 
+.lucky-seven-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: rgba(39, 174, 96, 0.9);
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7em;
+  border: 2px solid #27ae60;
+  animation: luckySevenBadgeGlow 2s ease-in-out infinite alternate;
+}
+
 @keyframes fireAceBadgeGlow {
   from {
     background: rgba(231, 76, 60, 0.9);
@@ -2031,6 +2590,74 @@ deck-card.special .add-card-button,
     border-color: #ff6347;
     box-shadow: 0 0 10px rgba(231, 76, 60, 0.8);
   }
+}
+
+@keyframes luckySevenBadgeGlow {
+  from {
+    background: rgba(39, 174, 96, 0.9);
+    border-color: #27ae60;
+  }
+  to {
+    background: rgba(46, 204, 113, 1.0);
+    border-color: #2ecc71;
+    box-shadow: 0 0 12px rgba(39, 174, 96, 0.8);
+  }
+}
+
+.chronometer-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: rgba(108, 92, 231, 0.9);
+  color: white;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6em;
+  border: 2px solid #6c5ce7;
+  animation: chronometerBadgeGlow 2.5s ease-in-out infinite alternate;
+  font-weight: bold;
+}
+
+@keyframes chronometerBadgeGlow {
+  from {
+    background: rgba(108, 92, 231, 0.9);
+    border-color: #6c5ce7;
+  }
+  to {
+    background: rgba(116, 185, 255, 1.0);
+    border-color: #74b9ff;
+    box-shadow: 0 0 15px rgba(108, 92, 231, 0.8);
+  }
+}
+
+.card.chronometer-card {
+  border: 2px solid #74b9ff;
+  box-shadow: 0 0 10px rgba(116, 185, 255, 0.5);
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.05), rgba(116, 185, 255, 0.05));
+  position: relative;
+}
+
+.card.chronometer-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 70%, rgba(116, 185, 255, 0.15));
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.card.chronometer-card .card-value,
+.card.chronometer-card .card-suit {
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
 }
 
 /* Панель критического выбора */
@@ -2122,5 +2749,296 @@ deck-card.special .add-card-button,
   }
   50% {
     transform: translateY(-5px);
+  }
+}
+
+/* Панель выбора масти для магнита мастей */
+.suit-choice-panel {
+  background: linear-gradient(135deg, #2c3e50, #34495e);
+  border: 3px solid #95a5a6;
+  border-radius: 15px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 8px 25px rgba(52, 73, 94, 0.4);
+  animation: suitChoiceAppear 0.5s ease-out;
+}
+
+.suit-choice-panel h3 {
+  color: #ecf0f1;
+  text-align: center;
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.suit-choice-options {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.suit-choice-option {
+  background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
+  border: 3px solid #95a5a6;
+  border-radius: 12px;
+  padding: 15px;
+  min-width: 100px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: suitOptionFloat 2s ease-in-out infinite;
+}
+
+.suit-choice-option:hover {
+  transform: translateY(-8px) scale(1.05);
+  box-shadow: 0 12px 25px rgba(52, 73, 94, 0.6);
+  border-color: #7f8c8d;
+}
+
+.suit-choice-option:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.suit-choice-option:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.suit-choice-option:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.suit-choice-option:nth-child(4) {
+  animation-delay: 0.6s;
+}
+
+.suit-symbol {
+  font-size: 2.5em;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.suit-choice-option.red-suit .suit-symbol {
+  color: #e74c3c;
+  text-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+}
+
+.suit-choice-option.black-suit .suit-symbol {
+  color: #2c3e50;
+  text-shadow: 0 2px 4px rgba(44, 62, 80, 0.3);
+}
+
+.suit-name {
+  font-size: 1em;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.current-multiplier {
+  font-size: 0.9em;
+  color: #7f8c8d;
+  font-weight: bold;
+}
+
+@keyframes suitChoiceAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes suitOptionFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* Панель предсказания карты судьбы */
+.destiny-preview-panel {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 3px solid #7b68ee;
+  border-radius: 15px;
+  padding: 25px;
+  margin: 20px 0;
+  box-shadow: 0 12px 30px rgba(123, 104, 238, 0.4);
+  animation: destinyAppear 0.7s ease-out;
+}
+
+.destiny-preview-panel h3 {
+  color: #dda0dd;
+  text-align: center;
+  margin: 0 0 20px 0;
+  font-size: 20px;
+  text-shadow: 0 2px 6px rgba(123, 104, 238, 0.5);
+}
+
+.destiny-preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+.predicted-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: rgba(123, 104, 238, 0.1);
+  border: 2px solid #7b68ee;
+  border-radius: 12px;
+  padding: 15px;
+}
+
+.predicted-card .card {
+  width: 60px;
+  height: 84px;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border: 2px solid #7b68ee;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.predicted-card .card-value {
+  font-size: 16px;
+  color: #2c3e50;
+}
+
+.predicted-card .card-suit {
+  font-size: 20px;
+  margin-top: 2px;
+}
+
+/* Стили для красных карт в предсказании */
+.predicted-card .card.red-card .card-value,
+.predicted-card .card.red-card .card-suit {
+  color: #e74c3c;
+}
+
+.card-info {
+  text-align: center;
+  color: #dda0dd;
+}
+
+.card-info div:first-child {
+  font-size: 14px;
+  margin-bottom: 5px;
+  opacity: 0.8;
+}
+
+.card-name {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.prediction-results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 250px;
+}
+
+.prediction-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  color: #e9ecef;
+  font-size: 14px;
+}
+
+.prediction-item.main-prediction {
+  background: rgba(123, 104, 238, 0.2);
+  border: 1px solid #7b68ee;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.current-score {
+  color: #95a5a6;
+  font-weight: bold;
+}
+
+.predicted-score {
+  color: #dda0dd;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.score-change.positive {
+  color: #2ecc71;
+  font-weight: bold;
+}
+
+.score-change.negative {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+.destiny-actions {
+  margin-top: 10px;
+}
+
+.destiny-close-btn {
+  background: linear-gradient(135deg, #7b68ee, #9370db);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 25px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(123, 104, 238, 0.3);
+}
+
+.destiny-close-btn:hover {
+  background: linear-gradient(135deg, #9370db, #8a2be2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(123, 104, 238, 0.5);
+}
+
+@keyframes destinyAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Эффект карты судьбы для панели спецкарт */
+.destiny-effect {
+  background: linear-gradient(135deg, #1a1a2e, #16213e) !important;
+  border-color: #7b68ee !important;
+  box-shadow: 0 4px 15px rgba(123, 104, 238, 0.3) !important;
+}
+
+.destiny-effect.active {
+  animation: destinyPulse 1.5s ease-in-out infinite;
+  box-shadow: 0 6px 25px rgba(123, 104, 238, 0.6) !important;
+}
+
+@keyframes destinyPulse {
+  0%, 100% {
+    box-shadow: 0 6px 25px rgba(123, 104, 238, 0.6);
+  }
+  50% {
+    box-shadow: 0 8px 35px rgba(123, 104, 238, 0.9);
   }
 }

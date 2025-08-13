@@ -64,7 +64,7 @@ export const specialCards = [
     id: 'special-06',
     value: '🛡️',
     suit: '✦',
-    cost: 90,
+    cost: 10,
     special: true,
     type: 'special',
     name: 'Тузовая броня',
@@ -124,7 +124,7 @@ export const specialCards = [
     id: 'special-11',
     value: '🔥',
     suit: '✦',
-    cost: 100,
+    cost: 10,
     special: true,
     type: 'special',
     name: 'Огненный туз',
@@ -146,14 +146,14 @@ export const specialCards = [
   },
   {
     id: 'special-13',
-    value: '🦎',
+    value: '🍃',
     suit: '✦',
-    cost: 120,
+    cost: 60,
     special: true,
     type: 'special',
-    name: 'Хамелеон',
-    description: 'Копирует эффект любой использованной спец.карты.',
-    effect: 'chameleon',
+    name: 'Листопад',
+    description: 'Сбрасывает случайную карту из руки и даёт +3 монеты.',
+    effect: 'leafFall',
     activationType: 'manual'
   },
   {
@@ -166,7 +166,7 @@ export const specialCards = [
     name: 'Масть удачи',
     description: 'Удваивает коэффициент случайной масти.',
     effect: 'luckySuit',
-    activationType: 'auto' // срабатывает при вытягивании
+    activationType: 'passive'
   },
   {
     id: 'special-15',
@@ -182,14 +182,14 @@ export const specialCards = [
   },
   {
     id: 'special-16',
-    value: '❄️',
+    value: '⚖️',
     suit: '✦',
-    cost: 90,
+    cost: 75,
     special: true,
     type: 'special',
-    name: 'Ледяное сердце',
-    description: 'Дилер пропускает один ход.',
-    effect: 'freezeDealer',
+    name: 'Стабилизатор',
+    description: 'Убирает случайность коэффициентов, устанавливая их на 1.0 для новых карт.',
+    effect: 'stabilizer',
     activationType: 'manual'
   },
   {
@@ -200,7 +200,7 @@ export const specialCards = [
     special: true,
     type: 'special',
     name: 'Золотое касание',
-    description: 'Следующая карта дает +5 монет.',
+    description: 'Следующая карта дает столько монет, сколько добавляет в счёт очков игрока',
     effect: 'goldenTouch',
     activationType: 'manual'
   },
@@ -208,12 +208,12 @@ export const specialCards = [
     id: 'special-18',
     value: '⏰',
     suit: '✦',
-    cost: 105,
+    cost: 80,
     special: true,
     type: 'special',
-    name: 'Временная петля',
-    description: 'Отменяет последний ход игрока.',
-    effect: 'timeLoop',
+    name: 'Хронометр',
+    description: 'Замедляет время - следующие 2 карты дают половину очков (округление вниз).',
+    effect: 'chronometer',
     activationType: 'manual'
   },
   {
@@ -232,7 +232,7 @@ export const specialCards = [
     id: 'special-20',
     value: '🎯',
     suit: '✦',
-    cost: 110,
+    cost: 10,
     special: true,
     type: 'special',
     name: 'Карта судьбы',
@@ -248,7 +248,7 @@ export const specialCards = [
     special: true,
     type: 'special',
     name: 'Королевский указ',
-    description: 'Все фигуры дают +2 очка в этой партии.',
+    description: 'Все карты дают +2 очка в этой партии.',
     effect: 'royalDecree',
     activationType: 'passive'
   }
