@@ -8,10 +8,12 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "tunnel": "vk-tunnel --insecure=1 --http-protocol=http --ws-protocol=ws --host=localhost --port=5173 --timeout=5000"
+    "tunnel": "vk-tunnel --insecure=1 --http-protocol=http --ws-protocol=ws --host=localhost --port=5173 --timeout=5000",
+    "deploy": "vk-miniapps-deploy"
   },
   "dependencies": {
     "@vkontakte/vk-bridge": "^2.15.7",
+    "@vkontakte/vk-miniapps-deploy": "^1.0.0",
     "@vkontakte/vk-tunnel": "^0.2.7",
     "mobx": "^6.13.7",
     "mobx-react-lite": "^4.1.0",
