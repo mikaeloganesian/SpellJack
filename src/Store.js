@@ -43,7 +43,7 @@ const generateStartedOwnedDeck = () => {
 }
 
 class GameStore {
-  coins = 10000;
+  coins = 100;
   playerDeck = generateStarterDeck();        // Игровая колода (36 карт для игры)
   playerOwnedCards = generateStartedOwnedDeck(); // Все купленные карты (коллекция)
   availableCards = specialCards;
