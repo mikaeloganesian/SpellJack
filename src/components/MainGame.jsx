@@ -220,8 +220,28 @@ const MainGame = observer(() => {
     setDealerDeck(shuffledDealerDeck);
     setPlayerHand(newPlayerHand);
     setDealerHand(newDealerHand);
-    setPlayerScore(calculateScore(newPlayerHand, true));
-    setDealerScore(calculateScore(newDealerHand, false));
+    
+    // Рассчитываем очки для стартовых рук
+    const initialPlayerScore = calculateScore(newPlayerHand, true);
+    const initialDealerScore = calculateScore(newDealerHand, false);
+    
+    // Проверяем, не превышает ли стартовая рука игрока цель
+    // Если да, то перегенерируем цель, чтобы она была выше на 10-30 очков
+    if (initialPlayerScore >= gameStore.currentTarget) {
+      const newTarget = initialPlayerScore + Math.floor(Math.random() * 21) + 10; // +10 до +30
+      gameStore.currentTarget = newTarget;
+      console.log(`⚠️ Стартовая рука (${initialPlayerScore}) превысила цель. Новая цель: ${newTarget}`);
+    }
+    
+    // Аналогично проверяем для дилера (хотя это менее критично)
+    if (initialDealerScore >= gameStore.currentTarget) {
+      const newTarget = Math.max(initialPlayerScore, initialDealerScore) + Math.floor(Math.random() * 21) + 10;
+      gameStore.currentTarget = newTarget;
+      console.log(`⚠️ Стартовая рука дилера (${initialDealerScore}) превысила цель. Новая цель: ${newTarget}`);
+    }
+    
+    setPlayerScore(initialPlayerScore);
+    setDealerScore(initialDealerScore);
     setIsPlayerTurn(true);
     setWinner('');
     setIsGameActive(true);
